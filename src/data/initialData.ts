@@ -5,8 +5,8 @@ export const DEFAULT_INITIAL_CATEGORIES: CategoryItem[] = [
   { id: '3a2f0f65-924f-44d1-9454-8f74f22ef35b', name: 'PASTEIS DOCE', order: 1, syncStatus: 'synced' },
   { id: 'b69a8683-756b-4ba6-a054-47bd86e1d165', name: 'BEBIDAS', order: 2, syncStatus: 'synced' },
   { id: 'c74aa8f0-e47d-44fc-bed4-8029eb868a03', name: 'SALGADOS', order: 3, syncStatus: 'synced' },
-  { id: '93334a24-2a00-45d8-85b4-12e58077e1b9', name: 'doces', order: 4, syncStatus: 'synced' },
-  { id: '1b720fc2-5fc4-4a9a-9a3d-f26e3034fa5e', name: 'pastel grande', order: 5, syncStatus: 'synced' },
+  { id: '93334a24-2a00-45d8-85b4-12e58077e1b9', name: 'DOCES', order: 4, syncStatus: 'synced' },
+  { id: '1b720fc2-5fc4-4a9a-9a3d-f26e3034fa5e', name: 'PASTEL GRANDE', order: 5, syncStatus: 'synced' },
   { id: 'category-acrescimo', name: 'ACRÉSCIMO', order: 6, syncStatus: 'synced' }
 ];
 

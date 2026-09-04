@@ -104,8 +104,7 @@ export const StorageService = {
   },
 
   syncMenuFromSnapshot: (docs: any[]): MenuItem[] => {
-    if (!docs || docs.length === 0) return [];
-    const remoteItems: MenuItem[] = docs.map(data => ({
+    let remoteItems: MenuItem[] = (docs || []).map(data => ({
       id: data.id,
       name: data.name || '',
       price: Number(data.price || 0),
@@ -117,31 +116,81 @@ export const StorageService = {
       order: Number(data.order ?? 999),
       syncStatus: 'synced' as const,
       updatedAt: data.updatedAt || Date.now()
-    })).sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+    }));
 
+    // If Firestore has only partial items (< 10), merge with DEFAULT_INITIAL_PRODUCTS
+    if (remoteItems.length < 10) {
+      const existingIds = new Set(remoteItems.map(i => i.id));
+      const existingNames = new Set(remoteItems.map(i => i.name.trim().toLowerCase()));
+      let missingAdded = 0;
+      DEFAULT_INITIAL_PRODUCTS.forEach(defItem => {
+        if (!existingIds.has(defItem.id) && !existingNames.has(defItem.name.trim().toLowerCase())) {
+          remoteItems.push({ ...defItem, syncStatus: 'synced' });
+          missingAdded++;
+        }
+      });
+      // Push missing to Firebase in background so Firestore gets the full menu
+      if (missingAdded > 0 && isFirebaseConfigured() && db && navigator.onLine) {
+        try {
+          const batch = writeBatch(db);
+          let count = 0;
+          DEFAULT_INITIAL_PRODUCTS.forEach(p => {
+            if (!existingIds.has(p.id) && !existingNames.has(p.name.trim().toLowerCase()) && count < 400) {
+              batch.set(doc(db, 'menu_items', p.id), { ...p, updatedAt: Date.now() }, { merge: true });
+              count++;
+            }
+          });
+          if (count > 0) batch.commit().catch(() => {});
+        } catch (e) {}
+      }
+    }
+
+    remoteItems.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
     localStorage.setItem(LS_KEYS.MENU, JSON.stringify(remoteItems));
     window.dispatchEvent(new CustomEvent('menu-changed', { detail: remoteItems }));
     return remoteItems;
   },
 
   syncCategoriesFromSnapshot: (docs: any[]): CategoryItem[] => {
-    if (!docs || docs.length === 0) return [];
-    const remoteCats: CategoryItem[] = docs.map(data => ({
+    let remoteCats: CategoryItem[] = (docs || []).map(data => ({
       id: data.id,
       name: data.name || '',
       order: Number(data.order ?? 0),
       syncStatus: 'synced' as const,
       updatedAt: data.updatedAt || Date.now()
-    })).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    }));
 
+    if (remoteCats.length < 7) {
+      const existingIds = new Set(remoteCats.map(c => c.id));
+      const existingNames = new Set(remoteCats.map(c => c.name.trim().toUpperCase()));
+      let missingAdded = 0;
+      DEFAULT_INITIAL_CATEGORIES.forEach(defCat => {
+        if (!existingIds.has(defCat.id) && !existingNames.has(defCat.name.trim().toUpperCase())) {
+          remoteCats.push({ ...defCat, syncStatus: 'synced' });
+          missingAdded++;
+        }
+      });
+      if (missingAdded > 0 && isFirebaseConfigured() && db && navigator.onLine) {
+        try {
+          const batch = writeBatch(db);
+          DEFAULT_INITIAL_CATEGORIES.forEach(c => {
+            if (!existingIds.has(c.id) && !existingNames.has(c.name.trim().toUpperCase())) {
+              batch.set(doc(db, 'categories', c.id), { ...c, updatedAt: Date.now() }, { merge: true });
+            }
+          });
+          batch.commit().catch(() => {});
+        } catch (e) {}
+      }
+    }
+
+    remoteCats.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     localStorage.setItem(LS_KEYS.CATEGORIES, JSON.stringify(remoteCats));
     window.dispatchEvent(new CustomEvent('menu-changed', { detail: remoteCats }));
     return remoteCats;
   },
 
   syncFillingsFromSnapshot: (docs: any[]): Filling[] => {
-    if (!docs || docs.length === 0) return [];
-    const remoteFillings: Filling[] = docs.map(data => ({
+    let remoteFillings: Filling[] = (docs || []).map(data => ({
       id: data.id,
       name: data.name || '',
       price: Number(data.price || 0),
@@ -151,33 +200,89 @@ export const StorageService = {
       updatedAt: data.updatedAt || Date.now()
     }));
 
+    if (remoteFillings.length < 5) {
+      const existingIds = new Set(remoteFillings.map(f => f.id));
+      const existingNames = new Set(remoteFillings.map(f => f.name.trim().toLowerCase()));
+      let missingAdded = 0;
+      DEFAULT_INITIAL_FILLINGS.forEach(defFilling => {
+        if (!existingIds.has(defFilling.id) && !existingNames.has(defFilling.name.trim().toLowerCase())) {
+          remoteFillings.push({ ...defFilling, syncStatus: 'synced' });
+          missingAdded++;
+        }
+      });
+      if (missingAdded > 0 && isFirebaseConfigured() && db && navigator.onLine) {
+        try {
+          const batch = writeBatch(db);
+          DEFAULT_INITIAL_FILLINGS.forEach(f => {
+            if (!existingIds.has(f.id) && !existingNames.has(f.name.trim().toLowerCase())) {
+              batch.set(doc(db, 'fillings', f.id), { ...f, updatedAt: Date.now() }, { merge: true });
+            }
+          });
+          batch.commit().catch(() => {});
+        } catch (e) {}
+      }
+    }
+
     localStorage.setItem(LS_KEYS.FILLINGS, JSON.stringify(remoteFillings));
     window.dispatchEvent(new CustomEvent('menu-changed', { detail: remoteFillings }));
     return remoteFillings;
   },
 
   syncAddonsFromSnapshot: (docs: any[]): Addon[] => {
-    if (!docs || docs.length === 0) return [];
-    const remoteAddons: Addon[] = docs.map(data => ({
+    let remoteAddons: Addon[] = (docs || []).map(data => ({
       id: data.id,
       name: data.name || '',
       price: Number(data.price || 0),
       order: Number(data.order ?? 999),
       syncStatus: 'synced' as const,
       updatedAt: data.updatedAt || Date.now()
-    })).sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+    }));
 
+    if (remoteAddons.length < 5) {
+      const existingIds = new Set(remoteAddons.map(a => a.id));
+      const existingNames = new Set(remoteAddons.map(a => a.name.trim().toLowerCase()));
+      let missingAdded = 0;
+      DEFAULT_INITIAL_ADDONS.forEach(defAddon => {
+        if (!existingIds.has(defAddon.id) && !existingNames.has(defAddon.name.trim().toLowerCase())) {
+          remoteAddons.push({ ...defAddon, syncStatus: 'synced' });
+          missingAdded++;
+        }
+      });
+      if (missingAdded > 0 && isFirebaseConfigured() && db && navigator.onLine) {
+        try {
+          const batch = writeBatch(db);
+          DEFAULT_INITIAL_ADDONS.forEach(a => {
+            if (!existingIds.has(a.id) && !existingNames.has(a.name.trim().toLowerCase())) {
+              batch.set(doc(db, 'addons', a.id), { ...a, updatedAt: Date.now() }, { merge: true });
+            }
+          });
+          batch.commit().catch(() => {});
+        } catch (e) {}
+      }
+    }
+
+    remoteAddons.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
     localStorage.setItem(LS_KEYS.ADDONS, JSON.stringify(remoteAddons));
     window.dispatchEvent(new CustomEvent('menu-changed', { detail: remoteAddons }));
     return remoteAddons;
   },
 
   syncMenuFillingsFromSnapshot: (docs: any[]): MenuItemFilling[] => {
-    const remote: MenuItemFilling[] = (docs || []).map(data => ({
+    let remote: MenuItemFilling[] = (docs || []).map(data => ({
       id: data.id,
       menuItemId: data.menuItemId,
       fillingId: data.fillingId
     }));
+
+    if (remote.length < 5) {
+      const existingIds = new Set(remote.map(r => r.id));
+      DEFAULT_INITIAL_MENU_FILLINGS.forEach(defMf => {
+        if (!existingIds.has(defMf.id)) {
+          remote.push(defMf);
+        }
+      });
+    }
+
     localStorage.setItem(LS_KEYS.MENU_FILLINGS, JSON.stringify(remote));
     window.dispatchEvent(new CustomEvent('menu-changed', { detail: remote }));
     return remote;
@@ -720,8 +825,17 @@ export const StorageService = {
     const stored = localStorage.getItem(LS_KEYS.MENU);
     let localProducts = stored ? JSON.parse(stored) : [];
 
-    if (Array.isArray(localProducts) && localProducts.length > 0) {
-      return localProducts.sort((a: MenuItem, b: MenuItem) => (a.order ?? 999) - (b.order ?? 999));
+    // If local products has less than 10 items, merge with all official default items
+    if (!Array.isArray(localProducts) || localProducts.length < 10) {
+      const existingIds = new Set((localProducts || []).map((p: any) => p.id));
+      const existingNames = new Set((localProducts || []).map((p: any) => (p.name || '').trim().toLowerCase()));
+      DEFAULT_INITIAL_PRODUCTS.forEach(dp => {
+        if (!existingIds.has(dp.id) && !existingNames.has(dp.name.trim().toLowerCase())) {
+          localProducts.push(dp);
+        }
+      });
+      localProducts.sort((a: MenuItem, b: MenuItem) => (a.order ?? 999) - (b.order ?? 999));
+      localStorage.setItem(LS_KEYS.MENU, JSON.stringify(localProducts));
     }
 
     if (isFirebaseConfigured() && db && navigator.onLine) {
@@ -733,9 +847,15 @@ export const StorageService = {
         } else {
           localProducts = DEFAULT_INITIAL_PRODUCTS;
           localStorage.setItem(LS_KEYS.MENU, JSON.stringify(localProducts));
+          const batch = writeBatch(db);
+          let count = 0;
           for (const item of DEFAULT_INITIAL_PRODUCTS) {
-            setDoc(doc(db, 'menu_items', item.id), item, { merge: true }).catch(() => {});
+            if (count < 400) {
+              batch.set(doc(db, 'menu_items', item.id), { ...item, updatedAt: Date.now() }, { merge: true });
+              count++;
+            }
           }
+          await batch.commit().catch(() => {});
           return localProducts;
         }
       } catch (e) {
@@ -743,8 +863,6 @@ export const StorageService = {
       }
     }
 
-    localProducts = DEFAULT_INITIAL_PRODUCTS;
-    localStorage.setItem(LS_KEYS.MENU, JSON.stringify(localProducts));
     return localProducts;
   },
 
@@ -840,8 +958,17 @@ export const StorageService = {
     const stored = localStorage.getItem(LS_KEYS.CATEGORIES);
     let localCategories: CategoryItem[] = stored ? JSON.parse(stored) : [];
 
-    if (Array.isArray(localCategories) && localCategories.length > 0) {
-      return localCategories.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    // Ensure all 7 official categories exist
+    if (!Array.isArray(localCategories) || localCategories.length < 7) {
+      const existingIds = new Set((localCategories || []).map((c: any) => c.id));
+      const existingNames = new Set((localCategories || []).map((c: any) => (c.name || '').trim().toUpperCase()));
+      DEFAULT_INITIAL_CATEGORIES.forEach(dc => {
+        if (!existingIds.has(dc.id) && !existingNames.has(dc.name.trim().toUpperCase())) {
+          localCategories.push(dc);
+        }
+      });
+      localCategories.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      localStorage.setItem(LS_KEYS.CATEGORIES, JSON.stringify(localCategories));
     }
 
     if (isFirebaseConfigured() && db && navigator.onLine) {
@@ -853,16 +980,16 @@ export const StorageService = {
         } else {
           localCategories = DEFAULT_INITIAL_CATEGORIES;
           localStorage.setItem(LS_KEYS.CATEGORIES, JSON.stringify(localCategories));
+          const batch = writeBatch(db);
           for (const cat of DEFAULT_INITIAL_CATEGORIES) {
-            setDoc(doc(db, 'categories', cat.id), cat, { merge: true }).catch(() => {});
+            batch.set(doc(db, 'categories', cat.id), { ...cat, updatedAt: Date.now() }, { merge: true });
           }
+          await batch.commit().catch(() => {});
           return localCategories;
         }
       } catch (e) {}
     }
 
-    localCategories = DEFAULT_INITIAL_CATEGORIES;
-    localStorage.setItem(LS_KEYS.CATEGORIES, JSON.stringify(localCategories));
     return localCategories;
   },
 
@@ -1088,6 +1215,30 @@ export const StorageService = {
     localStorage.setItem(LS_KEYS.ADDONS, JSON.stringify(DEFAULT_INITIAL_ADDONS));
     localStorage.setItem(LS_KEYS.MENU_FILLINGS, JSON.stringify(DEFAULT_INITIAL_MENU_FILLINGS));
     window.dispatchEvent(new CustomEvent('menu-changed'));
+
+    if (isFirebaseConfigured() && db && navigator.onLine) {
+      try {
+        const batch = writeBatch(db);
+        DEFAULT_INITIAL_CATEGORIES.forEach(c => {
+          batch.set(doc(db, 'categories', c.id), { ...c, updatedAt: Date.now() }, { merge: true });
+        });
+        DEFAULT_INITIAL_PRODUCTS.forEach(p => {
+          batch.set(doc(db, 'menu_items', p.id), { ...p, updatedAt: Date.now() }, { merge: true });
+        });
+        DEFAULT_INITIAL_FILLINGS.forEach(f => {
+          batch.set(doc(db, 'fillings', f.id), { ...f, updatedAt: Date.now() }, { merge: true });
+        });
+        DEFAULT_INITIAL_ADDONS.forEach(a => {
+          batch.set(doc(db, 'addons', a.id), { ...a, updatedAt: Date.now() }, { merge: true });
+        });
+        DEFAULT_INITIAL_MENU_FILLINGS.forEach(mf => {
+          batch.set(doc(db, 'menu_item_fillings', mf.id), { ...mf, updatedAt: Date.now() }, { merge: true });
+        });
+        await batch.commit();
+      } catch (e) {
+        console.warn("Erro ao salvar cardápio padrão no Firebase:", e);
+      }
+    }
   },
 
   saveMenuFillings: async (menuItemId: string, fillingIds: string[]): Promise<void> => {

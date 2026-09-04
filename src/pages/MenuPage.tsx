@@ -217,10 +217,19 @@ const MenuPage: React.FC = () => {
     loadData();
   };
 
+  const [isResetting, setIsResetting] = useState(false);
+
   const handleResetMenu = async () => {
-    await StorageService.resetToDefaultMenu();
-    await loadData();
-    setIsResetConfirmOpen(false);
+    setIsResetting(true);
+    try {
+      await StorageService.resetToDefaultMenu();
+      await loadData();
+      setIsResetConfirmOpen(false);
+    } catch (e) {
+      console.error("Erro ao resetar cardápio:", e);
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   const handleGenerateAIDescription = async () => {
@@ -317,8 +326,40 @@ const MenuPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Banner if items are incomplete */}
+      {items.length < 50 && (
+        <div className="bg-amber-500/10 border-2 border-amber-500/30 p-5 rounded-3xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in duration-300">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-amber-500 text-white rounded-2xl shadow-sm">
+              <Sparkles size={22} />
+            </div>
+            <div>
+              <h4 className="font-black text-slate-900 text-sm uppercase tracking-wide">
+                Cardápio com {items.length} {items.length === 1 ? 'item cadastrado' : 'itens cadastrados'}
+              </h4>
+              <p className="text-xs text-slate-600 font-medium">
+                O cardápio oficial completo da Pastelaria do Joel possui 58 produtos, 7 categorias, 12 adicionais e opções de bebidas.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleResetMenu}
+            disabled={isResetting}
+            className="whitespace-nowrap px-6 py-3.5 bg-amber-600 hover:bg-amber-500 active:scale-95 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-md transition-all flex items-center gap-2"
+          >
+            {isResetting ? <Loader2 size={16} className="animate-spin" /> : <RotateCcw size={16} />}
+            {isResetting ? 'Carregando 58 Itens...' : 'Carregar 58 Itens Oficiais'}
+          </button>
+        </div>
+      )}
+
       <div className="space-y-8">
-        {categories.sort((a,b) => (a.order || 0) - (b.order || 0)).map((cat) => (
+        {categories.sort((a,b) => (a.order || 0) - (b.order || 0)).map((cat) => {
+          const catItems = items
+            .filter(i => i.category === cat.id || i.category === cat.name || (i.category && cat.name && i.category.trim().toLowerCase() === cat.name.trim().toLowerCase()))
+            .sort((a,b) => (a.order || 0) - (b.order || 0));
+
+          return (
           <div key={cat.id} className="space-y-4 animate-in fade-in slide-in-from-left-4 duration-700">
             <div className="flex items-center justify-between border-b border-black/[0.03] pb-4">
               <div className="flex items-center gap-4">
@@ -327,7 +368,7 @@ const MenuPage: React.FC = () => {
                   {cat.name}
                 </h3>
                 <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-4 py-1.5 rounded-full border border-black/[0.05] uppercase tracking-widest">
-                  {items.filter(i => i.category === cat.id || i.category === cat.name).length} itens
+                  {catItems.length} {catItems.length === 1 ? 'item' : 'itens'}
                 </span>
               </div>
               <button 
@@ -339,9 +380,7 @@ const MenuPage: React.FC = () => {
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
-              {items
-                .filter(i => i.category === cat.id || i.category === cat.name)
-                .sort((a,b) => (a.order || 0) - (b.order || 0))
+              {catItems
                 .map(item => {
                 const isOutOfStock = item.inStock === false;
                 const isAutoDisabled = autoDisabledIds.has(item.id);
@@ -431,7 +470,8 @@ const MenuPage: React.FC = () => {
               })}
             </div>
           </div>
-        ))}
+        );
+        })}
       </div>
 
       {/* Product Modal */}
