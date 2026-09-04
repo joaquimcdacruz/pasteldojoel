@@ -57,17 +57,23 @@ const MenuPage: React.FC = () => {
   useEffect(() => { 
     loadData(); 
 
+    const handleMenuChanged = () => loadData();
+    window.addEventListener('menu-changed', handleMenuChanged);
+
     // Real-time Firebase Firestore subscriptions
     const unsubMenu = subscribeToCollection('menu_items', () => loadData());
     const unsubFillings = subscribeToCollection('fillings', () => loadData());
     const unsubCats = subscribeToCollection('categories', () => loadData());
     const unsubAddons = subscribeToCollection('addons', () => loadData());
+    const unsubMf = subscribeToCollection('menu_item_fillings', () => loadData());
 
     return () => {
+      window.removeEventListener('menu-changed', handleMenuChanged);
       unsubMenu();
       unsubFillings();
       unsubCats();
       unsubAddons();
+      unsubMf();
     };
   }, []);
 

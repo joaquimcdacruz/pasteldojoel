@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import OrdersPage from '@/pages/OrdersPage';
@@ -13,6 +13,7 @@ import CustomersPage from '@/pages/CustomersPage';
 import Login from '@/pages/Login';
 import { AuthProvider, useAuth } from '@/components/AuthProvider';
 import { UserRole } from '@/types';
+import { StorageService } from '@/services/storageService';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode, allowedRoles?: UserRole[] }> = ({ children, allowedRoles }) => {
   const { session, profile, loading } = useAuth();
@@ -37,6 +38,11 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode, allowedRoles?: UserR
 };
 
 const App: React.FC = () => {
+  useEffect(() => {
+    const unsub = StorageService.initGlobalSync();
+    return () => unsub();
+  }, []);
+
   return (
     <HashRouter>
       <AuthProvider>

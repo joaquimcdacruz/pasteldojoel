@@ -17,6 +17,9 @@ service cloud.firestore {
     match /addons/{addonId} {
       allow read, write: if true;
     }
+    match /menu_item_fillings/{id} {
+      allow read, write: if true;
+    }
     match /cash_sessions/{sessionId} {
       allow read, write: if true;
     }
@@ -30,6 +33,9 @@ service cloud.firestore {
       allow read, write: if true;
     }
     match /profiles/{userId} {
+      allow read, write: if true;
+    }
+    match /system_settings/{settingId} {
       allow read, write: if true;
     }
     match /{document=**} {
