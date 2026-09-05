@@ -1139,30 +1139,33 @@ export const StorageService = {
     localStorage.setItem(LS_KEYS.FILLINGS, JSON.stringify(DEFAULT_INITIAL_FILLINGS));
     localStorage.setItem(LS_KEYS.ADDONS, JSON.stringify(DEFAULT_INITIAL_ADDONS));
     localStorage.setItem(LS_KEYS.MENU_FILLINGS, JSON.stringify(DEFAULT_INITIAL_MENU_FILLINGS));
-    window.dispatchEvent(new CustomEvent('menu-changed'));
+    window.dispatchEvent(new CustomEvent('menu-changed', { detail: DEFAULT_INITIAL_PRODUCTS }));
 
     if (isFirebaseConfigured() && db && navigator.onLine) {
-      try {
-        const batch = writeBatch(db);
-        DEFAULT_INITIAL_CATEGORIES.forEach(c => {
-          batch.set(doc(db, 'categories', c.id), { ...c, updatedAt: Date.now() }, { merge: true });
-        });
-        DEFAULT_INITIAL_PRODUCTS.forEach(p => {
-          batch.set(doc(db, 'menu_items', p.id), { ...p, updatedAt: Date.now() }, { merge: true });
-        });
-        DEFAULT_INITIAL_FILLINGS.forEach(f => {
-          batch.set(doc(db, 'fillings', f.id), { ...f, updatedAt: Date.now() }, { merge: true });
-        });
-        DEFAULT_INITIAL_ADDONS.forEach(a => {
-          batch.set(doc(db, 'addons', a.id), { ...a, updatedAt: Date.now() }, { merge: true });
-        });
-        DEFAULT_INITIAL_MENU_FILLINGS.forEach(mf => {
-          batch.set(doc(db, 'menu_item_fillings', mf.id), { ...mf, updatedAt: Date.now() }, { merge: true });
-        });
-        await batch.commit();
-      } catch (e) {
-        console.warn("Erro ao salvar cardápio padrão no Firebase:", e);
-      }
+      // Fire-and-forget in background without blocking the UI
+      (async () => {
+        try {
+          const batch = writeBatch(db);
+          DEFAULT_INITIAL_CATEGORIES.forEach(c => {
+            batch.set(doc(db, 'categories', c.id), { ...c, updatedAt: Date.now() }, { merge: true });
+          });
+          DEFAULT_INITIAL_PRODUCTS.forEach(p => {
+            batch.set(doc(db, 'menu_items', p.id), { ...p, updatedAt: Date.now() }, { merge: true });
+          });
+          DEFAULT_INITIAL_FILLINGS.forEach(f => {
+            batch.set(doc(db, 'fillings', f.id), { ...f, updatedAt: Date.now() }, { merge: true });
+          });
+          DEFAULT_INITIAL_ADDONS.forEach(a => {
+            batch.set(doc(db, 'addons', a.id), { ...a, updatedAt: Date.now() }, { merge: true });
+          });
+          DEFAULT_INITIAL_MENU_FILLINGS.forEach(mf => {
+            batch.set(doc(db, 'menu_item_fillings', mf.id), { ...mf, updatedAt: Date.now() }, { merge: true });
+          });
+          await batch.commit();
+        } catch (e) {
+          console.warn("Erro ao salvar cardápio padrão no Firebase em background:", e);
+        }
+      })();
     }
   },
 

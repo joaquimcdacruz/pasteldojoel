@@ -5,6 +5,13 @@ import { StorageService } from '@/services/storageService';
 import { subscribeToCollection, getFirebaseHealth, FirebaseHealthState } from '@/integrations/firebase/config';
 import { generateCreativeDescription } from '@/services/geminiService';
 import ConfirmationModal from '@/components/modals/ConfirmationModal';
+import { 
+  DEFAULT_INITIAL_CATEGORIES, 
+  DEFAULT_INITIAL_PRODUCTS, 
+  DEFAULT_INITIAL_FILLINGS, 
+  DEFAULT_INITIAL_ADDONS, 
+  DEFAULT_INITIAL_MENU_FILLINGS 
+} from '@/data/initialData';
 
 
 const MenuPage: React.FC = () => {
@@ -79,6 +86,7 @@ const MenuPage: React.FC = () => {
   // Confirmation Modals
   const [promptDelete, setPromptDelete] = useState<{ type: 'item' | 'category' | 'addon' | 'filling', id: string, name: string } | null>(null);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+  const [resetSuccessToast, setResetSuccessToast] = useState(false);
   
   // Item Form
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
@@ -283,11 +291,25 @@ const MenuPage: React.FC = () => {
   const handleResetMenu = async () => {
     setIsResetting(true);
     try {
-      await StorageService.resetToDefaultMenu();
-      await loadData();
+      // 1. Instantly update React state directly with official catalog
+      setCategories(DEFAULT_INITIAL_CATEGORIES);
+      setItems(DEFAULT_INITIAL_PRODUCTS);
+      setFillings(DEFAULT_INITIAL_FILLINGS);
+      setAddons(DEFAULT_INITIAL_ADDONS);
+      setMenuFillings(DEFAULT_INITIAL_MENU_FILLINGS);
+
+      // 2. Immediately close the confirmation modal
       setIsResetConfirmOpen(false);
+
+      // 3. Show success toast feedback
+      setResetSuccessToast(true);
+      setTimeout(() => setResetSuccessToast(false), 5000);
+
+      // 4. Save to localStorage and sync to Firebase in background
+      await StorageService.resetToDefaultMenu();
     } catch (e) {
       console.error("Erro ao resetar cardápio:", e);
+      setIsResetConfirmOpen(false);
     } finally {
       setIsResetting(false);
     }
@@ -1025,9 +1047,28 @@ const MenuPage: React.FC = () => {
         title="Restaurar Cardápio Oficial"
         message="Deseja restaurar o cardápio oficial completo da Pastelaria do Joel? Isso carregará todas as 7 categorias, 58 produtos, 12 adicionais e 8 opções de bebidas com preços e configurações originais."
         isDestructive={false}
+        isLoading={isResetting}
+        confirmLabel={isResetting ? "Restaurando..." : "Confirmar"}
         onConfirm={handleResetMenu}
-        onCancel={() => setIsResetConfirmOpen(false)}
+        onCancel={() => !isResetting && setIsResetConfirmOpen(false)}
       />
+
+      {/* Floating Success Toast */}
+      {resetSuccessToast && (
+        <div className="fixed bottom-6 right-6 z-[100] bg-emerald-600 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 font-bold text-sm animate-in fade-in slide-in-from-bottom-4 duration-300 border border-emerald-400/30">
+          <CheckCircle2 size={22} className="text-white shrink-0" />
+          <div>
+            <p className="text-[10px] uppercase tracking-widest font-black text-emerald-200">Sucesso</p>
+            <p className="text-xs font-semibold text-white">Cardápio oficial restaurado! 58 produtos e 7 categorias carregados.</p>
+          </div>
+          <button 
+            onClick={() => setResetSuccessToast(false)} 
+            className="ml-3 p-1 rounded-lg hover:bg-white/20 text-white/80 hover:text-white transition-all"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
