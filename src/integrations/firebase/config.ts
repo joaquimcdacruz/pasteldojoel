@@ -115,6 +115,72 @@ export const isFirebaseConfigured = (): boolean => {
   return !!db && !!auth && !!activeConfig?.projectId;
 };
 
+export type FirebaseHealthStatus = 'unconfigured' | 'connecting' | 'connected' | 'api_disabled' | 'error';
+
+export interface FirebaseHealthState {
+  status: FirebaseHealthStatus;
+  message?: string;
+  projectId?: string;
+  activationUrl?: string;
+}
+
+let currentHealth: FirebaseHealthState = !isFirebaseConfigured() 
+  ? { status: 'unconfigured' }
+  : { 
+      status: 'connecting', 
+      projectId: activeConfig?.projectId,
+      activationUrl: `https://console.firebase.google.com/project/${activeConfig?.projectId || 'pasteldojoel-e3992'}/firestore`
+    };
+
+export const getFirebaseHealth = (): FirebaseHealthState => currentHealth;
+
+export const setFirebaseHealth = (newHealth: FirebaseHealthState) => {
+  currentHealth = newHealth;
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('firebase-health-changed', { detail: newHealth }));
+  }
+};
+
+// Check connection on boot
+if (typeof window !== 'undefined' && isFirebaseConfigured() && db) {
+  setTimeout(async () => {
+    try {
+      const { doc, getDocFromServer } = await import('firebase/firestore');
+      await getDocFromServer(doc(db, '_connection_test', 'ping'));
+      setFirebaseHealth({
+        status: 'connected',
+        projectId: activeConfig?.projectId,
+      });
+    } catch (err: any) {
+      const msg = err?.message || String(err);
+      if (
+        msg.includes('Cloud Firestore API has not been used') || 
+        msg.includes('it is disabled') ||
+        (err?.code === 'permission-denied' && msg.includes('overview?project='))
+      ) {
+        setFirebaseHealth({
+          status: 'api_disabled',
+          message: 'O Cloud Firestore não foi ativado no Firebase Console deste projeto.',
+          projectId: activeConfig?.projectId,
+          activationUrl: `https://console.firebase.google.com/project/${activeConfig?.projectId || 'pasteldojoel-e3992'}/firestore`
+        });
+      } else if (err?.code === 'permission-denied') {
+        // Rules might require auth or are working, connection reached Firestore
+        setFirebaseHealth({
+          status: 'connected',
+          projectId: activeConfig?.projectId
+        });
+      } else {
+        setFirebaseHealth({
+          status: 'error',
+          message: msg,
+          projectId: activeConfig?.projectId
+        });
+      }
+    }
+  }, 1000);
+}
+
 export { app, db, auth, analytics };
 
 /**
@@ -134,10 +200,27 @@ export const subscribeToCollection = (
     return onSnapshot(
       q,
       (snapshot) => {
+        setFirebaseHealth({
+          status: 'connected',
+          projectId: activeConfig?.projectId
+        });
         const docs = snapshot.docs.map((d) => ({ ...d.data(), id: d.id }));
         onUpdate(docs);
       },
-      (error) => {
+      (error: any) => {
+        const msg = error?.message || String(error);
+        if (
+          msg.includes('Cloud Firestore API has not been used') || 
+          msg.includes('it is disabled') ||
+          (error?.code === 'permission-denied' && msg.includes('overview?project='))
+        ) {
+          setFirebaseHealth({
+            status: 'api_disabled',
+            message: 'O Cloud Firestore não foi ativado no Firebase Console.',
+            projectId: activeConfig?.projectId,
+            activationUrl: `https://console.firebase.google.com/project/${activeConfig?.projectId || 'pasteldojoel-e3992'}/firestore`
+          });
+        }
         console.warn(`[Firebase Realtime] Aviso na coleção ${collectionName}:`, error);
       }
     );

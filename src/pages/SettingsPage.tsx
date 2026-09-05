@@ -16,7 +16,8 @@ import {
   Flame,
   Key,
   CheckCircle2,
-  RefreshCw
+  RefreshCw,
+  ExternalLink
 } from 'lucide-react';
 import { StorageService } from '@/services/storageService';
 import { UserProfile, UserRole } from '@/types';
@@ -26,6 +27,8 @@ import {
   getStoredFirebaseConfig, 
   saveFirebaseConfig, 
   clearFirebaseConfig,
+  getFirebaseHealth,
+  FirebaseHealthState,
   FirebaseConfig
 } from '@/integrations/firebase/config';
 import { collection, getDocs, doc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
@@ -51,7 +54,16 @@ const SettingsPage: React.FC = () => {
 
   // Firebase Config State
   const isFirebaseActive = isFirebaseConfigured();
+  const [firebaseHealth, setFirebaseHealthState] = useState<FirebaseHealthState>(getFirebaseHealth());
   const [showFirebaseModal, setShowFirebaseModal] = useState(false);
+
+  useEffect(() => {
+    const handleHealthChange = (e: any) => {
+      setFirebaseHealthState(e.detail || getFirebaseHealth());
+    };
+    window.addEventListener('firebase-health-changed', handleHealthChange);
+    return () => window.removeEventListener('firebase-health-changed', handleHealthChange);
+  }, []);
   const [fbConfig, setFbConfig] = useState<FirebaseConfig>({
     apiKey: '',
     authDomain: '',
@@ -307,13 +319,25 @@ const SettingsPage: React.FC = () => {
             </div>
           </div>
           <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
-            isFirebaseActive 
+            firebaseHealth.status === 'connected'
               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+              : firebaseHealth.status === 'api_disabled'
+              ? 'bg-amber-50 text-amber-800 border border-amber-300'
+              : firebaseHealth.status === 'error'
+              ? 'bg-rose-50 text-rose-700 border border-rose-200'
               : 'bg-slate-100 text-slate-600 border border-slate-200'
           }`}>
-            {isFirebaseActive ? (
+            {firebaseHealth.status === 'connected' ? (
               <>
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" /> Conectado
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" /> Conectado e Sincronizando
+              </>
+            ) : firebaseHealth.status === 'api_disabled' ? (
+              <>
+                <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" /> Requer Ativação do Firestore
+              </>
+            ) : firebaseHealth.status === 'error' ? (
+              <>
+                <span className="h-2 w-2 rounded-full bg-rose-500" /> Erro na Conexão
               </>
             ) : (
               <>
@@ -323,14 +347,45 @@ const SettingsPage: React.FC = () => {
           </span>
         </div>
 
+        {firebaseHealth.status === 'api_disabled' && (
+          <div className="bg-amber-500/10 border-2 border-amber-500/30 rounded-2xl p-5 space-y-3 animate-in fade-in">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-amber-500 text-white rounded-xl shrink-0">
+                <AlertTriangle size={20} />
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-sm font-black text-amber-950 uppercase tracking-wide">
+                  Cloud Firestore ainda não foi ativado no Firebase Console
+                </h4>
+                <p className="text-xs text-amber-900 leading-relaxed">
+                  Por isso cada navegador está com dados separados! Enquanto o Cloud Firestore não for criado no projeto <strong>{fbConfig.projectId || 'pasteldojoel-e3992'}</strong>, os navegadores não conseguem sincronizar pedidos e produtos entre si.
+                </p>
+              </div>
+            </div>
+            <div className="pt-2 flex flex-wrap items-center gap-3">
+              <a
+                href={firebaseHealth.activationUrl || `https://console.firebase.google.com/project/${fbConfig.projectId || 'pasteldojoel-e3992'}/firestore`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all"
+              >
+                <ExternalLink size={14} /> Ativar Cloud Firestore no Console Firebase
+              </a>
+              <span className="text-[11px] text-amber-800 font-medium">
+                (Leva apenas 1 minuto: clique em "Criar banco de dados" no Firebase)
+              </span>
+            </div>
+          </div>
+        )}
+
         <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 mb-4 text-xs text-slate-600 space-y-1">
           <p className="font-semibold text-slate-700">
             {isFirebaseActive 
-              ? `Projeto ativo: ${fbConfig.projectId || 'Configurado via ambiente'}` 
+              ? `Projeto ativo: ${fbConfig.projectId || 'pasteldojoel-e3992'}` 
               : 'Nenhum projeto Firebase conectado no momento. O sistema está salvando dados localmente.'}
           </p>
           <p className="text-slate-400 text-[11px]">
-            Todos os pedidos, produtos, recheios e movimentações de caixa são sincronizados instantaneamente entre múltiplos caixas e dispositivos quando conectado ao Firestore.
+            Todos os pedidos, produtos, recheios e movimentações de caixa são sincronizados instantaneamente entre múltiplos caixas e dispositivos quando o Cloud Firestore está ativo.
           </p>
         </div>
 

@@ -146,8 +146,12 @@ export const StorageService = {
     }
 
     remoteItems.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
-    localStorage.setItem(LS_KEYS.MENU, JSON.stringify(remoteItems));
-    window.dispatchEvent(new CustomEvent('menu-changed', { detail: remoteItems }));
+    const previous = localStorage.getItem(LS_KEYS.MENU);
+    const serialized = JSON.stringify(remoteItems);
+    if (previous !== serialized) {
+      localStorage.setItem(LS_KEYS.MENU, serialized);
+      window.dispatchEvent(new CustomEvent('menu-changed', { detail: remoteItems }));
+    }
     return remoteItems;
   },
 
@@ -184,8 +188,12 @@ export const StorageService = {
     }
 
     remoteCats.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-    localStorage.setItem(LS_KEYS.CATEGORIES, JSON.stringify(remoteCats));
-    window.dispatchEvent(new CustomEvent('menu-changed', { detail: remoteCats }));
+    const previous = localStorage.getItem(LS_KEYS.CATEGORIES);
+    const serialized = JSON.stringify(remoteCats);
+    if (previous !== serialized) {
+      localStorage.setItem(LS_KEYS.CATEGORIES, serialized);
+      window.dispatchEvent(new CustomEvent('menu-changed', { detail: remoteCats }));
+    }
     return remoteCats;
   },
 
@@ -223,8 +231,12 @@ export const StorageService = {
       }
     }
 
-    localStorage.setItem(LS_KEYS.FILLINGS, JSON.stringify(remoteFillings));
-    window.dispatchEvent(new CustomEvent('menu-changed', { detail: remoteFillings }));
+    const previous = localStorage.getItem(LS_KEYS.FILLINGS);
+    const serialized = JSON.stringify(remoteFillings);
+    if (previous !== serialized) {
+      localStorage.setItem(LS_KEYS.FILLINGS, serialized);
+      window.dispatchEvent(new CustomEvent('menu-changed', { detail: remoteFillings }));
+    }
     return remoteFillings;
   },
 
@@ -262,8 +274,12 @@ export const StorageService = {
     }
 
     remoteAddons.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
-    localStorage.setItem(LS_KEYS.ADDONS, JSON.stringify(remoteAddons));
-    window.dispatchEvent(new CustomEvent('menu-changed', { detail: remoteAddons }));
+    const previous = localStorage.getItem(LS_KEYS.ADDONS);
+    const serialized = JSON.stringify(remoteAddons);
+    if (previous !== serialized) {
+      localStorage.setItem(LS_KEYS.ADDONS, serialized);
+      window.dispatchEvent(new CustomEvent('menu-changed', { detail: remoteAddons }));
+    }
     return remoteAddons;
   },
 
@@ -283,8 +299,12 @@ export const StorageService = {
       });
     }
 
-    localStorage.setItem(LS_KEYS.MENU_FILLINGS, JSON.stringify(remote));
-    window.dispatchEvent(new CustomEvent('menu-changed', { detail: remote }));
+    const previous = localStorage.getItem(LS_KEYS.MENU_FILLINGS);
+    const serialized = JSON.stringify(remote);
+    if (previous !== serialized) {
+      localStorage.setItem(LS_KEYS.MENU_FILLINGS, serialized);
+      window.dispatchEvent(new CustomEvent('menu-changed', { detail: remote }));
+    }
     return remote;
   },
 
@@ -838,31 +858,6 @@ export const StorageService = {
       localStorage.setItem(LS_KEYS.MENU, JSON.stringify(localProducts));
     }
 
-    if (isFirebaseConfigured() && db && navigator.onLine) {
-      try {
-        const snapshot = await getDocs(collection(db, 'menu_items'));
-        if (!snapshot.empty) {
-          const docs = snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
-          return StorageService.syncMenuFromSnapshot(docs);
-        } else {
-          localProducts = DEFAULT_INITIAL_PRODUCTS;
-          localStorage.setItem(LS_KEYS.MENU, JSON.stringify(localProducts));
-          const batch = writeBatch(db);
-          let count = 0;
-          for (const item of DEFAULT_INITIAL_PRODUCTS) {
-            if (count < 400) {
-              batch.set(doc(db, 'menu_items', item.id), { ...item, updatedAt: Date.now() }, { merge: true });
-              count++;
-            }
-          }
-          await batch.commit().catch(() => {});
-          return localProducts;
-        }
-      } catch (e) {
-        console.warn("Erro ao carregar produtos do Firestore:", e);
-      }
-    }
-
     return localProducts;
   },
 
@@ -971,25 +966,6 @@ export const StorageService = {
       localStorage.setItem(LS_KEYS.CATEGORIES, JSON.stringify(localCategories));
     }
 
-    if (isFirebaseConfigured() && db && navigator.onLine) {
-      try {
-        const snapshot = await getDocs(collection(db, 'categories'));
-        if (!snapshot.empty) {
-          const docs = snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
-          return StorageService.syncCategoriesFromSnapshot(docs);
-        } else {
-          localCategories = DEFAULT_INITIAL_CATEGORIES;
-          localStorage.setItem(LS_KEYS.CATEGORIES, JSON.stringify(localCategories));
-          const batch = writeBatch(db);
-          for (const cat of DEFAULT_INITIAL_CATEGORIES) {
-            batch.set(doc(db, 'categories', cat.id), { ...cat, updatedAt: Date.now() }, { merge: true });
-          }
-          await batch.commit().catch(() => {});
-          return localCategories;
-        }
-      } catch (e) {}
-    }
-
     return localCategories;
   },
 
@@ -1047,23 +1023,6 @@ export const StorageService = {
       return localAddons.sort((a: Addon, b: Addon) => (a.order ?? 999) - (b.order ?? 999));
     }
 
-    if (isFirebaseConfigured() && db && navigator.onLine) {
-      try {
-        const snapshot = await getDocs(collection(db, 'addons'));
-        if (!snapshot.empty) {
-          const docs = snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
-          return StorageService.syncAddonsFromSnapshot(docs);
-        } else {
-          localAddons = DEFAULT_INITIAL_ADDONS;
-          localStorage.setItem(LS_KEYS.ADDONS, JSON.stringify(localAddons));
-          for (const addon of DEFAULT_INITIAL_ADDONS) {
-            setDoc(doc(db, 'addons', addon.id), addon, { merge: true }).catch(() => {});
-          }
-          return localAddons;
-        }
-      } catch (e) {}
-    }
-
     localAddons = DEFAULT_INITIAL_ADDONS;
     localStorage.setItem(LS_KEYS.ADDONS, JSON.stringify(localAddons));
     return localAddons;
@@ -1114,23 +1073,6 @@ export const StorageService = {
 
     if (Array.isArray(localFillings) && localFillings.length > 0) {
       return localFillings;
-    }
-
-    if (isFirebaseConfigured() && db && navigator.onLine) {
-      try {
-        const snapshot = await getDocs(collection(db, 'fillings'));
-        if (!snapshot.empty) {
-          const docs = snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
-          return StorageService.syncFillingsFromSnapshot(docs);
-        } else {
-          localFillings = DEFAULT_INITIAL_FILLINGS;
-          localStorage.setItem(LS_KEYS.FILLINGS, JSON.stringify(localFillings));
-          for (const filling of DEFAULT_INITIAL_FILLINGS) {
-            setDoc(doc(db, 'fillings', filling.id), filling, { merge: true }).catch(() => {});
-          }
-          return localFillings;
-        }
-      } catch (e) {}
     }
 
     localFillings = DEFAULT_INITIAL_FILLINGS;
@@ -1184,23 +1126,6 @@ export const StorageService = {
 
     if (Array.isArray(localMf) && localMf.length > 0) {
       return localMf;
-    }
-
-    if (isFirebaseConfigured() && db && navigator.onLine) {
-      try {
-        const snapshot = await getDocs(collection(db, 'menu_item_fillings'));
-        if (!snapshot.empty) {
-          const docs = snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
-          return StorageService.syncMenuFillingsFromSnapshot(docs);
-        } else {
-          localMf = DEFAULT_INITIAL_MENU_FILLINGS;
-          localStorage.setItem(LS_KEYS.MENU_FILLINGS, JSON.stringify(localMf));
-          for (const mf of DEFAULT_INITIAL_MENU_FILLINGS) {
-            setDoc(doc(db, 'menu_item_fillings', mf.id), mf, { merge: true }).catch(() => {});
-          }
-          return localMf;
-        }
-      } catch (e) {}
     }
 
     localMf = DEFAULT_INITIAL_MENU_FILLINGS;

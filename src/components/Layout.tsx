@@ -7,7 +7,8 @@ import { StorageService } from '@/services/storageService';
 import { useSync } from '@/hooks/useSync';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/AuthProvider';
-import { isFirebaseConfigured } from '@/integrations/firebase/config';
+import { isFirebaseConfigured, getFirebaseHealth, FirebaseHealthState } from '@/integrations/firebase/config';
+import { AlertTriangle } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -15,9 +16,18 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [logoSrc, setLogoSrc] = useState<string>('/logo.png');
+  const [firebaseHealth, setFirebaseHealthState] = useState<FirebaseHealthState>(getFirebaseHealth());
   const { isOnline, isSyncing } = useSync();
   const { profile, session, signOut } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleHealthChange = (e: any) => {
+      setFirebaseHealthState(e.detail || getFirebaseHealth());
+    };
+    window.addEventListener('firebase-health-changed', handleHealthChange);
+    return () => window.removeEventListener('firebase-health-changed', handleHealthChange);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -140,30 +150,62 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               onClick={() => navigate('/settings')}
               title="Clique para gerenciar a conexão em nuvem"
               className={`w-full text-left flex items-center gap-3 p-3.5 rounded-2xl border transition-all duration-300 shadow-inner group hover:scale-[1.02] ${
-                isFirebaseConfigured() 
+                firebaseHealth.status === 'connected'
                   ? 'bg-emerald-500/5 border-emerald-500/20 hover:border-emerald-500/40' 
-                  : 'bg-amber-500/5 border-amber-500/20 hover:border-amber-500/40'
+                  : firebaseHealth.status === 'api_disabled'
+                  ? 'bg-amber-500/10 border-amber-500/30 hover:border-amber-500/50'
+                  : firebaseHealth.status === 'error'
+                  ? 'bg-rose-500/10 border-rose-500/30 hover:border-rose-500/50'
+                  : 'bg-slate-500/5 border-slate-500/20 hover:border-slate-500/40'
               }`}
             >
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                  isFirebaseConfigured() ? 'bg-emerald-500/10 text-emerald-600' : 'bg-amber-500/10 text-amber-600'
+                  firebaseHealth.status === 'connected' 
+                    ? 'bg-emerald-500/10 text-emerald-600' 
+                    : firebaseHealth.status === 'api_disabled'
+                    ? 'bg-amber-500/20 text-amber-600'
+                    : firebaseHealth.status === 'error'
+                    ? 'bg-rose-500/20 text-rose-600'
+                    : 'bg-slate-500/10 text-slate-600'
                 }`}>
                     {isSyncing ? (
                         <RefreshCcw size={14} className="animate-spin text-emerald-600" />
-                    ) : isFirebaseConfigured() ? (
+                    ) : firebaseHealth.status === 'connected' ? (
                         <Flame size={15} className="fill-emerald-500" />
+                    ) : firebaseHealth.status === 'api_disabled' ? (
+                        <AlertTriangle size={15} className="text-amber-600" />
+                    ) : firebaseHealth.status === 'error' ? (
+                        <AlertTriangle size={15} className="text-rose-600" />
                     ) : (
                         <Cloud size={15} />
                     )}
                 </div>
                 <div className="flex-1 overflow-hidden">
                     <p className={`text-[9px] font-black uppercase tracking-wider truncate ${
-                      isFirebaseConfigured() ? 'text-emerald-700' : 'text-amber-700'
+                      firebaseHealth.status === 'connected'
+                        ? 'text-emerald-700' 
+                        : firebaseHealth.status === 'api_disabled'
+                        ? 'text-amber-700'
+                        : firebaseHealth.status === 'error'
+                        ? 'text-rose-700'
+                        : 'text-slate-700'
                     }`}>
-                        {isFirebaseConfigured() ? 'Nuvem Firebase' : 'Modo Local'}
+                        {firebaseHealth.status === 'connected'
+                          ? 'Nuvem Conectada' 
+                          : firebaseHealth.status === 'api_disabled'
+                          ? 'Firestore Pendente'
+                          : firebaseHealth.status === 'error'
+                          ? 'Erro Conexão'
+                          : 'Modo Local'}
                     </p>
                     <p className="text-[8px] text-slate-500 truncate font-bold uppercase tracking-tighter">
-                        {isFirebaseConfigured() ? (isOnline ? 'Tempo Real Ativo' : 'Offline Temporário') : 'Toque p/ Conectar'}
+                        {firebaseHealth.status === 'connected'
+                          ? (isOnline ? 'Tempo Real Ativo' : 'Offline Temporário') 
+                          : firebaseHealth.status === 'api_disabled'
+                          ? 'Toque p/ Ativar no Console'
+                          : firebaseHealth.status === 'error'
+                          ? 'Verifique Configuração'
+                          : 'Toque p/ Conectar'}
                     </p>
                 </div>
             </button>

@@ -1,19 +1,73 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, Loader2, ListOrdered, Sparkles, X, PlusCircle, UtensilsCrossed, Eye, EyeOff, Beef, ToggleLeft, ToggleRight, Link as LinkIcon, PackagePlus, CheckCircle2, RotateCcw } from 'lucide-react';
+import { Plus, Trash2, Edit2, Loader2, ListOrdered, Sparkles, X, PlusCircle, UtensilsCrossed, Eye, EyeOff, Beef, ToggleLeft, ToggleRight, Link as LinkIcon, PackagePlus, CheckCircle2, RotateCcw, AlertTriangle, ExternalLink } from 'lucide-react';
 import { MenuItem, CategoryItem, Addon, Filling, MenuItemFilling } from '@/types';
 import { StorageService } from '@/services/storageService';
-import { subscribeToCollection } from '@/integrations/firebase/config';
+import { subscribeToCollection, getFirebaseHealth, FirebaseHealthState } from '@/integrations/firebase/config';
 import { generateCreativeDescription } from '@/services/geminiService';
 import ConfirmationModal from '@/components/modals/ConfirmationModal';
 
 
 const MenuPage: React.FC = () => {
-  const [categories, setCategories] = useState<CategoryItem[]>([]);
-  const [items, setItems] = useState<MenuItem[]>([]);
-  const [addons, setAddons] = useState<Addon[]>([]);
-  const [fillings, setFillings] = useState<Filling[]>([]);
-  const [menuFillings, setMenuFillings] = useState<MenuItemFilling[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [categories, setCategories] = useState<CategoryItem[]>(() => {
+    try {
+      const stored = localStorage.getItem('pastelaria_categories');
+      if (stored) {
+        const p = JSON.parse(stored);
+        if (Array.isArray(p) && p.length > 0) return p;
+      }
+    } catch {}
+    return [];
+  });
+  const [items, setItems] = useState<MenuItem[]>(() => {
+    try {
+      const stored = localStorage.getItem('pastelaria_menu');
+      if (stored) {
+        const p = JSON.parse(stored);
+        if (Array.isArray(p) && p.length > 0) return p;
+      }
+    } catch {}
+    return [];
+  });
+  const [addons, setAddons] = useState<Addon[]>(() => {
+    try {
+      const stored = localStorage.getItem('pastelaria_addons');
+      if (stored) {
+        const p = JSON.parse(stored);
+        if (Array.isArray(p) && p.length > 0) return p;
+      }
+    } catch {}
+    return [];
+  });
+  const [fillings, setFillings] = useState<Filling[]>(() => {
+    try {
+      const stored = localStorage.getItem('pastelaria_fillings');
+      if (stored) {
+        const p = JSON.parse(stored);
+        if (Array.isArray(p) && p.length > 0) return p;
+      }
+    } catch {}
+    return [];
+  });
+  const [menuFillings, setMenuFillings] = useState<MenuItemFilling[]>(() => {
+    try {
+      const stored = localStorage.getItem('pastelaria_menu_item_fillings');
+      if (stored) {
+        const p = JSON.parse(stored);
+        if (Array.isArray(p) && p.length > 0) return p;
+      }
+    } catch {}
+    return [];
+  });
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [firebaseHealth, setFirebaseHealthState] = useState<FirebaseHealthState>(getFirebaseHealth());
+
+  useEffect(() => {
+    const handleHealthChange = (e: any) => {
+      setFirebaseHealthState(e.detail || getFirebaseHealth());
+    };
+    window.addEventListener('firebase-health-changed', handleHealthChange);
+    return () => window.removeEventListener('firebase-health-changed', handleHealthChange);
+  }, []);
 
   // Modals
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -55,17 +109,17 @@ const MenuPage: React.FC = () => {
 
 
   useEffect(() => { 
-    loadData(); 
+    loadData(true); 
 
-    const handleMenuChanged = () => loadData();
+    const handleMenuChanged = () => loadData(true);
     window.addEventListener('menu-changed', handleMenuChanged);
 
     // Real-time Firebase Firestore subscriptions
-    const unsubMenu = subscribeToCollection('menu_items', () => loadData());
-    const unsubFillings = subscribeToCollection('fillings', () => loadData());
-    const unsubCats = subscribeToCollection('categories', () => loadData());
-    const unsubAddons = subscribeToCollection('addons', () => loadData());
-    const unsubMf = subscribeToCollection('menu_item_fillings', () => loadData());
+    const unsubMenu = subscribeToCollection('menu_items', () => loadData(true));
+    const unsubFillings = subscribeToCollection('fillings', () => loadData(true));
+    const unsubCats = subscribeToCollection('categories', () => loadData(true));
+    const unsubAddons = subscribeToCollection('addons', () => loadData(true));
+    const unsubMf = subscribeToCollection('menu_item_fillings', () => loadData(true));
 
     return () => {
       window.removeEventListener('menu-changed', handleMenuChanged);
@@ -79,21 +133,28 @@ const MenuPage: React.FC = () => {
 
 
 
-  const loadData = async () => {
-    setIsLoading(true);
-    const [cats, products, extras, fills, mf] = await Promise.all([
-      StorageService.getCategories(),
-      StorageService.getProducts(),
-      StorageService.getAddons(),
-      StorageService.getFillings(),
-      StorageService.getMenuFillings()
-    ]);
-    setCategories(cats);
-    setItems(products);
-    setAddons(extras);
-    setFillings(fills);
-    setMenuFillings(mf);
-    setIsLoading(false);
+  const loadData = async (silent = true) => {
+    if (!silent && items.length === 0) {
+      setIsLoading(true);
+    }
+    try {
+      const [cats, products, extras, fills, mf] = await Promise.all([
+        StorageService.getCategories(),
+        StorageService.getProducts(),
+        StorageService.getAddons(),
+        StorageService.getFillings(),
+        StorageService.getMenuFillings()
+      ]);
+      setCategories(cats);
+      setItems(products);
+      setAddons(extras);
+      setFillings(fills);
+      setMenuFillings(mf);
+    } catch (err) {
+      console.error("Erro ao carregar cardápio:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Compute auto-disabled product IDs
@@ -278,7 +339,7 @@ const MenuPage: React.FC = () => {
 
 
 
-  if (isLoading) return <div className="p-10 flex justify-center text-brand-500 h-full items-center"><Loader2 className="animate-spin w-10 h-10" /></div>;
+  if (isLoading && items.length === 0) return <div className="p-10 flex justify-center text-brand-500 h-full items-center"><Loader2 className="animate-spin w-10 h-10" /></div>;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-300 max-w-7xl mx-auto pb-10">
@@ -325,6 +386,34 @@ const MenuPage: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Banner se Firestore precisa ser ativado para sincronizar entre navegadores */}
+      {firebaseHealth.status === 'api_disabled' && (
+        <div className="bg-amber-500/10 border-2 border-amber-500/40 p-5 rounded-3xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in fade-in duration-300">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="p-3 bg-amber-500 text-white rounded-2xl shadow-sm shrink-0">
+              <AlertTriangle size={22} />
+            </div>
+            <div>
+              <h4 className="font-black text-slate-900 text-sm uppercase tracking-wide">
+                Sincronização entre navegadores pausada (Cloud Firestore pendente)
+              </h4>
+              <p className="text-xs text-slate-600 font-medium leading-relaxed">
+                Cada navegador está mostrando dados diferentes porque o banco Cloud Firestore ainda precisa ser criado/ativado no console do Firebase do projeto <strong>{firebaseHealth.projectId || 'pasteldojoel-e3992'}</strong>.
+              </p>
+            </div>
+          </div>
+          <a
+            href={firebaseHealth.activationUrl || `https://console.firebase.google.com/project/${firebaseHealth.projectId || 'pasteldojoel-e3992'}/firestore`}
+            target="_blank"
+            rel="noreferrer"
+            className="whitespace-nowrap px-6 py-3.5 bg-amber-600 hover:bg-amber-500 active:scale-95 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-md transition-all flex items-center gap-2"
+          >
+            <ExternalLink size={16} />
+            Ativar Firestore no Console (1 min)
+          </a>
+        </div>
+      )}
 
       {/* Banner if items are incomplete */}
       {items.length < 50 && (
