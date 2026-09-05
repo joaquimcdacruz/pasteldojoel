@@ -1,6 +1,9 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { 
   getFirestore, 
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
   Firestore, 
   collection, 
   onSnapshot, 
@@ -43,8 +46,21 @@ export const getStoredFirebaseConfig = (): FirebaseConfig => {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed?.projectId && parsed?.apiKey && parsed.projectId !== 'gen-lang-client-0415141841') {
-        return parsed;
+      // Ensure that if localStorage has an old, incorrect, or mismatched projectId,
+      // it is purged so all devices and browsers use the official database!
+      if (
+        parsed?.projectId && 
+        parsed?.apiKey && 
+        parsed.projectId === DEFAULT_FIREBASE_CONFIG.projectId
+      ) {
+        return {
+          ...DEFAULT_FIREBASE_CONFIG,
+          ...parsed,
+          projectId: DEFAULT_FIREBASE_CONFIG.projectId
+        };
+      } else {
+        console.warn(`[Firebase] Configuração desatualizada ou divergente removida (${parsed?.projectId}). Conectando ao projeto oficial ${DEFAULT_FIREBASE_CONFIG.projectId}.`);
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
       }
     }
   } catch (e) {
@@ -83,6 +99,11 @@ export const clearFirebaseConfig = () => {
   window.location.reload();
 };
 
+export const resetToOfficialFirebaseConfig = () => {
+  localStorage.removeItem(LOCAL_STORAGE_KEY);
+  window.location.reload();
+};
+
 let app: FirebaseApp | null = null;
 let db: Firestore | null = null;
 let auth: Auth | null = null;
@@ -97,11 +118,22 @@ if (activeConfig && activeConfig.apiKey && activeConfig.projectId) {
     } else {
       app = getApp();
     }
-    if (activeConfig.firestoreDatabaseId && activeConfig.firestoreDatabaseId !== '(default)') {
-      db = getFirestore(app, activeConfig.firestoreDatabaseId);
-    } else {
-      db = getFirestore(app);
+
+    // Try multi-tab persistent cache to sync between multiple browser tabs/windows seamlessly
+    try {
+      db = initializeFirestore(app, {
+        localCache: persistentLocalCache({
+          tabManager: persistentMultipleTabManager()
+        })
+      });
+    } catch (cacheErr) {
+      if (activeConfig.firestoreDatabaseId && activeConfig.firestoreDatabaseId !== '(default)') {
+        db = getFirestore(app, activeConfig.firestoreDatabaseId);
+      } else {
+        db = getFirestore(app);
+      }
     }
+
     auth = getAuth(app);
 
     if (typeof window !== 'undefined' && activeConfig.measurementId) {
@@ -153,7 +185,13 @@ if (typeof window !== 'undefined' && isFirebaseConfigured() && db) {
   setTimeout(async () => {
     try {
       const { doc, getDoc } = await import('firebase/firestore');
-      await getDoc(doc(db, '_connection_test', 'ping'));
+      const pingDoc = doc(db, '_connection_test', 'ping');
+      const fetchPing = getDoc(pingDoc);
+      const timeoutPing = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('timeout_connection')), 4000)
+      );
+      await Promise.race([fetchPing, timeoutPing]);
+      
       setFirebaseHealth({
         status: 'connected',
         projectId: activeConfig?.projectId,
@@ -171,15 +209,22 @@ if (typeof window !== 'undefined' && isFirebaseConfigured() && db) {
           projectId: activeConfig?.projectId,
           activationUrl: `https://console.firebase.google.com/project/${activeConfig?.projectId || 'pasteldojoel-e3992'}/firestore`
         });
+      } else if (msg === 'timeout_connection') {
+        if (currentHealth.status === 'connecting') {
+          // If listeners already connected or pending, set to connected so UI is not locked
+          setFirebaseHealth({
+            status: 'connected',
+            projectId: activeConfig?.projectId
+          });
+        }
       } else {
-        // Any other response (e.g. permission-denied or offline cache) reached Firestore
         setFirebaseHealth({
           status: 'connected',
           projectId: activeConfig?.projectId
         });
       }
     }
-  }, 500);
+  }, 300);
 }
 
 export { app, db, auth, analytics };
@@ -220,6 +265,12 @@ export const subscribeToCollection = (
             message: 'O Cloud Firestore não foi ativado no Firebase Console.',
             projectId: activeConfig?.projectId,
             activationUrl: `https://console.firebase.google.com/project/${activeConfig?.projectId || 'pasteldojoel-e3992'}/firestore`
+          });
+        } else {
+          setFirebaseHealth({
+            status: 'error',
+            message: `Falha na sincronização: ${error?.code || error?.message || 'Erro de conexão'}`,
+            projectId: activeConfig?.projectId
           });
         }
         console.warn(`[Firebase Realtime] Aviso na coleção ${collectionName}:`, error);

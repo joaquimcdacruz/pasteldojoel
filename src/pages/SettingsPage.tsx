@@ -27,6 +27,7 @@ import {
   getStoredFirebaseConfig, 
   saveFirebaseConfig, 
   clearFirebaseConfig,
+  resetToOfficialFirebaseConfig,
   getFirebaseHealth,
   FirebaseHealthState,
   FirebaseConfig
@@ -389,7 +390,18 @@ const SettingsPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm('Restaurar a conexão oficial com o projeto pasteldojoel-e3992? Isso garantirá que todos os dispositivos fiquem sincronizados em tempo real.')) {
+                resetToOfficialFirebaseConfig();
+              }
+            }}
+            className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
+          >
+            <Flame size={14} className="fill-white" /> Sincronizar Nuvem Oficial (pasteldojoel-e3992)
+          </button>
           <button
             type="button"
             onClick={() => setShowFirebaseModal(true)}

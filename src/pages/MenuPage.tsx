@@ -184,26 +184,59 @@ const MenuPage: React.FC = () => {
   const autoDisabledIds = StorageService.getAutoDisabledProductIds(fillings, menuFillings, items);
 
   const handleSaveItem = async () => {
-    if (!itemName || !itemPrice || !itemCategory) return;
+    const trimmedName = itemName.trim();
+    if (!trimmedName) {
+      alert("Por favor, preencha o nome do produto.");
+      return;
+    }
 
-    const isBev = StorageService.isBeverage({ category: itemCategory } as any);
+    const priceStr = String(itemPrice).replace(',', '.').trim();
+    const cleanPrice = parseFloat(priceStr);
+    if (isNaN(cleanPrice) || cleanPrice < 0) {
+      alert("Por favor, informe um preço válido para o produto.");
+      return;
+    }
+
+    const finalCategory = itemCategory || categories[0]?.id || 'Geral';
+    const isBev = StorageService.isBeverage({ category: finalCategory } as any);
     const validQty = (itemStockQuantity && parseInt(itemStockQuantity) > 0) ? parseInt(itemStockQuantity) : undefined;
 
     const newItem: MenuItem = {
       id: editingItem?.id || StorageService.generateId(),
-      name: itemName.trim(),
-      price: parseFloat(itemPrice),
-      category: itemCategory,
-      description: itemDescription,
+      name: trimmedName,
+      price: cleanPrice,
+      category: finalCategory,
+      description: itemDescription || '',
       order: parseInt(itemOrder) || 0,
       inStock: editingItem ? (editingItem.inStock !== false) : true,
       stockQuantity: isBev ? validQty : undefined
     };
-    await StorageService.saveProduct(newItem);
-    // Save filling links
-    await StorageService.saveMenuFillings(newItem.id, selectedFillingIds);
+
+    // Fechar o popup imediatamente para o usuário
     setIsModalOpen(false);
-    loadData();
+    setEditingItem(null);
+
+    // Atualização otimista imediata na tela
+    setItems(prev => {
+      const idx = prev.findIndex(p => p.id === newItem.id);
+      if (idx >= 0) {
+        const copy = [...prev];
+        copy[idx] = newItem;
+        return copy;
+      }
+      return [...prev, newItem];
+    });
+
+    try {
+      await StorageService.saveProduct(newItem);
+      if (selectedFillingIds) {
+        await StorageService.saveMenuFillings(newItem.id, selectedFillingIds);
+      }
+    } catch (e) {
+      console.error("Erro ao salvar produto:", e);
+    } finally {
+      loadData();
+    }
   };
 
   const handleSaveCategory = async () => {
@@ -350,9 +383,10 @@ const MenuPage: React.FC = () => {
   const openItemModal = (item?: MenuItem) => {
     if (item) {
       setEditingItem(item);
-      setItemName(item.name);
-      setItemPrice(item.price.toString());
-      setItemCategory(item.category);
+      setItemName(item.name || '');
+      setItemPrice(item.price !== undefined && item.price !== null ? item.price.toString() : '');
+      const matchedCat = categories.find(c => c.id === item.category || c.name.toLowerCase() === (item.category || '').toLowerCase());
+      setItemCategory(matchedCat ? matchedCat.id : (item.category || categories[0]?.id || 'Geral'));
       setItemDescription(item.description || '');
       setItemOrder((item.order || 0).toString());
       const isBev = StorageService.isBeverage(item);
@@ -363,7 +397,7 @@ const MenuPage: React.FC = () => {
       setEditingItem(null);
       setItemName('');
       setItemPrice('');
-      setItemCategory(categories[0]?.id || categories[0]?.name || '');
+      setItemCategory(categories[0]?.id || 'Geral');
       setItemDescription('');
       setItemOrder('0');
       setItemStockQuantity('');
@@ -606,7 +640,16 @@ const MenuPage: React.FC = () => {
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-6 z-[100] animate-in fade-in duration-300">
           <div className="glass-card p-10 rounded-[3rem] w-full max-w-xl shadow-2xl space-y-8 relative border border-black/[0.1] animate-in zoom-in-95 duration-500 max-h-[90vh] overflow-y-auto custom-scrollbar bg-white">
-            <button onClick={() => setIsModalOpen(false)} className="absolute top-8 right-8 text-slate-400 hover:text-slate-900 p-2 hover:bg-black/5 rounded-full transition-all"><X size={20}/></button>
+            <button 
+              type="button"
+              onClick={() => {
+                setIsModalOpen(false);
+                setEditingItem(null);
+              }} 
+              className="absolute top-8 right-8 text-slate-400 hover:text-slate-900 p-2 hover:bg-black/5 rounded-full transition-all"
+            >
+              <X size={20}/>
+            </button>
             <div className="flex items-center gap-4">
                <div className="p-3 bg-brand-600 text-white rounded-2xl shadow-glow-orange">
                   <UtensilsCrossed size={20} />
@@ -632,8 +675,8 @@ const MenuPage: React.FC = () => {
                   <div className="relative">
                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-500 font-black text-xs italic">R$</span>
                      <input 
-                        type="number" 
-                        step="0.50" 
+                        type="text" 
+                        inputMode="decimal"
                         value={itemPrice} 
                         onChange={e => setItemPrice(e.target.value)} 
                         onKeyDown={e => e.key === 'Enter' && handleSaveItem()}
@@ -699,8 +742,15 @@ const MenuPage: React.FC = () => {
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Categoria</label>
                 <div className="relative">
-                  <select value={itemCategory} onChange={e => setItemCategory(e.target.value)} className="w-full p-5 bg-black/[0.02] rounded-[1.5rem] border border-black/[0.05] outline-none text-slate-900 text-sm appearance-none font-bold focus:ring-2 focus:ring-brand-500/50 transition-all cursor-pointer">
+                  <select 
+                    value={itemCategory} 
+                    onChange={e => setItemCategory(e.target.value)} 
+                    className="w-full p-5 bg-black/[0.02] rounded-[1.5rem] border border-black/[0.05] outline-none text-slate-900 text-sm appearance-none font-bold focus:ring-2 focus:ring-brand-500/50 transition-all cursor-pointer"
+                  >
                     {categories.map(c => <option key={c.id} value={c.id} className="bg-white text-slate-900">{c.name}</option>)}
+                    {!categories.some(c => c.id === itemCategory) && itemCategory && (
+                      <option value={itemCategory} className="bg-white text-slate-900">{itemCategory}</option>
+                    )}
                   </select>
                   <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                     <ListOrdered size={16} />
@@ -750,7 +800,10 @@ const MenuPage: React.FC = () => {
             <div className="flex gap-4 pt-4">
               <button 
                 type="button"
-                onClick={() => setIsModalOpen(false)} 
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setEditingItem(null);
+                }} 
                 className="flex-1 py-5 bg-black/[0.02] border border-black/5 text-slate-400 hover:text-slate-900 font-black text-[10px] uppercase tracking-widest rounded-[1.5rem] transition-all"
               >
                 Descartar
