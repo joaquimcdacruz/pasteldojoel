@@ -104,19 +104,26 @@ export const StorageService = {
   },
 
   syncMenuFromSnapshot: (docs: any[]): MenuItem[] => {
-    let remoteItems: MenuItem[] = (docs || []).map(data => ({
-      id: data.id,
-      name: data.name || '',
-      price: Number(data.price || 0),
-      category: data.category || 'Geral',
-      description: data.description || '',
-      imageUrl: data.imageUrl || '',
-      inStock: data.inStock !== false,
-      stockQuantity: (data.stockQuantity !== undefined && data.stockQuantity !== null) ? Number(data.stockQuantity) : undefined,
-      order: Number(data.order ?? 999),
-      syncStatus: 'synced' as const,
-      updatedAt: data.updatedAt || Date.now()
-    }));
+    let remoteItems: MenuItem[] = (docs || []).map(data => {
+      const isBev = StorageService.isBeverage({ category: data.category } as any);
+      const validStock = (data.stockQuantity !== undefined && data.stockQuantity !== null && Number(data.stockQuantity) > 0)
+        ? Number(data.stockQuantity)
+        : undefined;
+
+      return {
+        id: data.id,
+        name: data.name || '',
+        price: Number(data.price || 0),
+        category: data.category || 'Geral',
+        description: data.description || '',
+        imageUrl: data.imageUrl || '',
+        inStock: data.inStock !== false,
+        stockQuantity: isBev ? validStock : undefined,
+        order: Number(data.order ?? 999),
+        syncStatus: 'synced' as const,
+        updatedAt: data.updatedAt || Date.now()
+      };
+    });
 
     // If Firestore has only partial items (< 10), merge with DEFAULT_INITIAL_PRODUCTS
     if (remoteItems.length < 10) {
@@ -905,12 +912,32 @@ export const StorageService = {
       localStorage.setItem(LS_KEYS.MENU, JSON.stringify(localProducts));
     }
 
+    // Sanitize: non-beverage food items are always available (infinite stock), controlled manually
+    localProducts = localProducts.map((p: MenuItem) => {
+      const isBev = StorageService.isBeverage(p);
+      const validStock = (p.stockQuantity !== undefined && p.stockQuantity !== null && Number(p.stockQuantity) > 0)
+        ? Number(p.stockQuantity)
+        : undefined;
+      return {
+        ...p,
+        stockQuantity: isBev ? validStock : undefined,
+        inStock: p.inStock !== false
+      };
+    });
+
     return localProducts;
   },
 
   saveProduct: async (product: MenuItem): Promise<MenuItem> => {
+    const isBev = StorageService.isBeverage(product);
+    const validQty = (product.stockQuantity !== undefined && product.stockQuantity !== null && Number(product.stockQuantity) > 0)
+      ? Number(product.stockQuantity)
+      : undefined;
+
     const updated: MenuItem = {
       ...product,
+      stockQuantity: isBev ? validQty : undefined,
+      inStock: product.inStock !== false,
       syncStatus: 'pending',
       updatedAt: Date.now()
     };
@@ -932,7 +959,7 @@ export const StorageService = {
           description: product.description || '',
           imageUrl: product.imageUrl || '',
           inStock: product.inStock !== false,
-          stockQuantity: product.stockQuantity !== undefined ? Number(product.stockQuantity) : null,
+          stockQuantity: isBev && validQty ? validQty : null,
           order: Number(product.order ?? 999),
           updatedAt: Date.now()
         }, { merge: true });
@@ -972,6 +999,9 @@ export const StorageService = {
     const index = items.findIndex(i => i.id === productId);
     if (index >= 0) {
       items[index].inStock = inStock;
+      if (inStock && !StorageService.isBeverage(items[index])) {
+        delete items[index].stockQuantity;
+      }
       items[index].syncStatus = 'pending';
       items[index].updatedAt = Date.now();
       localStorage.setItem(LS_KEYS.MENU, JSON.stringify(items));
@@ -982,6 +1012,7 @@ export const StorageService = {
       try {
         await updateDoc(doc(db, 'menu_items', productId), {
           inStock: inStock,
+          stockQuantity: null,
           updatedAt: Date.now()
         });
         if (index >= 0) {
@@ -1712,24 +1743,24 @@ export const StorageService = {
 
   // ─── Stock Control Helpers ────────────────────────────────────────────
 
-  isBeverage: (item: MenuItem | undefined) => {
+  isBeverage: (item: MenuItem | { category?: string } | undefined) => {
     if (!item) return false;
     const cat = (item.category || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    return cat === 'bebidas' || cat === 'bebida';
+    if (cat.includes('bebida') || cat === '980753d8-ba96-419b-a7e8-e5088c4293f7') return true;
+    try {
+      const cats: CategoryItem[] = JSON.parse(localStorage.getItem(LS_KEYS.CATEGORIES) || '[]');
+      const matched = cats.find(c => c.id === item.category);
+      if (matched) {
+        const cName = (matched.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        return cName.includes('bebida');
+      }
+    } catch {}
+    return false;
   },
 
   getAutoDisabledProductIds: (fillings: Filling[], menuFillings: MenuItemFilling[], products: MenuItem[] = []): Set<string> => {
     const outOfStockFillingIds = new Set(fillings.filter(f => !f.inStock).map(f => f.id));
     const disabledIds = new Set<string>();
-
-    products.forEach(p => {
-      if (p.stockQuantity !== undefined && p.stockQuantity !== null && p.stockQuantity <= 0) {
-        disabledIds.add(p.id);
-      }
-      if (p.inStock === false) {
-        disabledIds.add(p.id);
-      }
-    });
 
     if (outOfStockFillingIds.size === 0) return disabledIds;
 
@@ -1740,9 +1771,10 @@ export const StorageService = {
     });
 
     fillingsByProduct.forEach((fIds, productId) => {
+      if (fIds.length === 0) return;
       const product = products.find(p => p.id === productId);
       const isBev = StorageService.isBeverage(product);
-      if (isBev && fIds.length > 0) {
+      if (isBev) {
         if (fIds.every(fid => outOfStockFillingIds.has(fid))) {
           disabledIds.add(productId);
         }
@@ -1760,8 +1792,8 @@ export const StorageService = {
 
     for (const item of order.items) {
       const pIdx = products.findIndex(p => p.id === item.menuItemId);
-      if (pIdx >= 0 && products[pIdx].stockQuantity !== undefined && products[pIdx].stockQuantity !== null) {
-        if (!StorageService.isBeverage(products[pIdx]) || !item.fillingId) {
+      if (pIdx >= 0 && StorageService.isBeverage(products[pIdx]) && products[pIdx].stockQuantity !== undefined && products[pIdx].stockQuantity !== null) {
+        if (!item.fillingId) {
           products[pIdx].stockQuantity = Math.max(0, (products[pIdx].stockQuantity || 0) - item.quantity);
           products[pIdx].syncStatus = 'pending';
           products[pIdx].updatedAt = Date.now();
@@ -1823,8 +1855,8 @@ export const StorageService = {
 
     for (const item of order.items) {
       const pIdx = products.findIndex(p => p.id === item.menuItemId);
-      if (pIdx >= 0 && products[pIdx].stockQuantity !== undefined && products[pIdx].stockQuantity !== null) {
-        if (!StorageService.isBeverage(products[pIdx]) || !item.fillingId) {
+      if (pIdx >= 0 && StorageService.isBeverage(products[pIdx]) && products[pIdx].stockQuantity !== undefined && products[pIdx].stockQuantity !== null) {
+        if (!item.fillingId) {
           products[pIdx].stockQuantity = (products[pIdx].stockQuantity || 0) + item.quantity;
           products[pIdx].syncStatus = 'pending';
           products[pIdx].updatedAt = Date.now();

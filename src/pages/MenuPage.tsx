@@ -186,15 +186,18 @@ const MenuPage: React.FC = () => {
   const handleSaveItem = async () => {
     if (!itemName || !itemPrice || !itemCategory) return;
 
+    const isBev = StorageService.isBeverage({ category: itemCategory } as any);
+    const validQty = (itemStockQuantity && parseInt(itemStockQuantity) > 0) ? parseInt(itemStockQuantity) : undefined;
+
     const newItem: MenuItem = {
       id: editingItem?.id || StorageService.generateId(),
-      name: itemName,
+      name: itemName.trim(),
       price: parseFloat(itemPrice),
       category: itemCategory,
       description: itemDescription,
       order: parseInt(itemOrder) || 0,
-      inStock: editingItem?.inStock !== false,
-      stockQuantity: itemStockQuantity === '' ? undefined : parseInt(itemStockQuantity)
+      inStock: editingItem ? (editingItem.inStock !== false) : true,
+      stockQuantity: isBev ? validQty : undefined
     };
     await StorageService.saveProduct(newItem);
     // Save filling links
@@ -352,7 +355,8 @@ const MenuPage: React.FC = () => {
       setItemCategory(item.category);
       setItemDescription(item.description || '');
       setItemOrder((item.order || 0).toString());
-      setItemStockQuantity(item.stockQuantity !== undefined && item.stockQuantity !== null ? item.stockQuantity.toString() : '');
+      const isBev = StorageService.isBeverage(item);
+      setItemStockQuantity((isBev && item.stockQuantity !== undefined && item.stockQuantity !== null && item.stockQuantity > 0) ? item.stockQuantity.toString() : '');
       // Load filling links for this product
       setSelectedFillingIds(menuFillings.filter(mf => mf.menuItemId === item.id).map(mf => mf.fillingId));
     } else {
@@ -509,14 +513,12 @@ const MenuPage: React.FC = () => {
               {catItems
                 .map(item => {
                 const isOutOfStock = item.inStock === false;
-                const isAutoDisabled = autoDisabledIds.has(item.id);
-                const isUnavailable = isOutOfStock || isAutoDisabled;
-
-                // Find which fillings are linked and out of stock for this item
                 const linkedFillingIds = menuFillings.filter(mf => mf.menuItemId === item.id).map(mf => mf.fillingId);
                 const outOfStockFillingNames = fillings
                   .filter(f => linkedFillingIds.includes(f.id) && !f.inStock)
                   .map(f => f.name);
+                const isAutoDisabled = autoDisabledIds.has(item.id) && outOfStockFillingNames.length > 0;
+                const isUnavailable = isOutOfStock || isAutoDisabled;
 
                 return (
                 <div key={item.id} className={`glass-card p-4 lg:p-5 rounded-[2rem] flex flex-col justify-between border transition-all duration-700 group relative overflow-hidden bg-white shadow-sm ${isUnavailable ? 'border-red-500/20 opacity-60' : 'border-black/[0.05] hover:border-brand-600/30 hover:shadow-brand-600/5'}`}>
@@ -559,15 +561,15 @@ const MenuPage: React.FC = () => {
                       <p className="text-[10px] text-slate-700 line-clamp-3 italic font-medium leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity">
                         {item.description || 'Sabor tradicional e inesquecível preparado com os melhores ingredientes selecionados.'}
                       </p>
-                      {item.stockQuantity !== undefined && item.stockQuantity !== null ? (
-                         <div className={`mt-3 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest ${item.stockQuantity <= 0 ? 'text-red-500' : item.stockQuantity <= 5 ? 'text-amber-500' : 'text-emerald-500'}`}>
-                            <div className={`w-1.5 h-1.5 rounded-full ${item.stockQuantity <= 0 ? 'bg-red-500' : item.stockQuantity <= 5 ? 'bg-amber-500' : 'bg-emerald-500'} animate-pulse`} />
-                            {item.stockQuantity <= 0 ? 'Esgotado' : `${item.stockQuantity} disponível(is)`}
+                      {item.stockQuantity !== undefined && item.stockQuantity !== null && item.stockQuantity > 0 ? (
+                         <div className={`mt-3 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest ${item.stockQuantity <= 5 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                            <div className={`w-1.5 h-1.5 rounded-full ${item.stockQuantity <= 5 ? 'bg-amber-500' : 'bg-emerald-500'} animate-pulse`} />
+                            {item.stockQuantity} disponível(is)
                          </div>
                       ) : (
-                         <div className="mt-3 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-brand-500 opacity-80">
-                            <div className="w-1.5 h-1.5 rounded-full bg-brand-500" />
-                            ∞ DISPONÍVEL
+                         <div className={`mt-3 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest ${item.inStock === false ? 'text-red-500' : 'text-brand-500 opacity-80'}`}>
+                            <div className={`w-1.5 h-1.5 rounded-full ${item.inStock === false ? 'bg-red-500' : 'bg-brand-500'}`} />
+                            {item.inStock === false ? 'SEM ESTOQUE' : '∞ DISPONÍVEL'}
                          </div>
                       )}
                       {/* Linked fillings tags */}
@@ -647,11 +649,20 @@ const MenuPage: React.FC = () => {
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Estoque</label>
                   {(() => {
-                    const categoryName = categories.find(c => c.id === itemCategory || c.name === itemCategory)?.name;
-                    const isBev = StorageService.isBeverage({ category: categoryName } as any);
+                    const categoryObj = categories.find(c => c.id === itemCategory || c.name === itemCategory);
+                    const isBev = StorageService.isBeverage({ category: categoryObj?.name || itemCategory } as any);
                     const hasFlavors = selectedFillingIds.length > 0;
                     
-                    if (isBev && hasFlavors) {
+                    if (!isBev) {
+                      return (
+                        <div className="w-full h-[62px] bg-emerald-500/5 rounded-[1.5rem] border border-emerald-500/15 text-emerald-600 flex flex-col items-center justify-center gap-0.5 leading-none">
+                          <span className="text-[9px] font-black uppercase tracking-widest text-emerald-600">Disponibilidade</span>
+                          <span className="text-xs font-black flex items-center gap-1">∞ Sempre Disponível</span>
+                        </div>
+                      );
+                    }
+
+                    if (hasFlavors) {
                       const linkedFillings = selectedFillingIds.map(fid => fillings.find(fl => fl.id === fid)).filter(Boolean);
                       const hasInfinite = linkedFillings.some(f => f!.stockQuantity === undefined || f!.stockQuantity === null);
                       const totalStock = linkedFillings.reduce((sum, f) => sum + (f!.stockQuantity || 0), 0);
@@ -674,7 +685,7 @@ const MenuPage: React.FC = () => {
                           min="0"
                           value={itemStockQuantity} 
                           onChange={e => setItemStockQuantity(e.target.value)} 
-                           onKeyDown={e => e.key === 'Enter' && handleSaveItem()}
+                          onKeyDown={e => e.key === 'Enter' && handleSaveItem()}
                           className="w-full p-5 pl-10 bg-black/[0.02] rounded-[1.5rem] border border-black/[0.05] outline-none font-black text-brand-500 text-sm focus:ring-2 focus:ring-brand-500/50 transition-all text-center placeholder:text-transparent" 
                           placeholder=" "
                         />
@@ -717,6 +728,7 @@ const MenuPage: React.FC = () => {
                   <div className="flex flex-wrap gap-2">
                     {fillings.map(f => (
                       <button
+                        type="button"
                         key={f.id}
                         onClick={() => toggleFillingLink(f.id)}
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 border ${
@@ -737,12 +749,14 @@ const MenuPage: React.FC = () => {
 
             <div className="flex gap-4 pt-4">
               <button 
+                type="button"
                 onClick={() => setIsModalOpen(false)} 
                 className="flex-1 py-5 bg-black/[0.02] border border-black/5 text-slate-400 hover:text-slate-900 font-black text-[10px] uppercase tracking-widest rounded-[1.5rem] transition-all"
               >
                 Descartar
               </button>
               <button 
+                type="button"
                 onClick={handleSaveItem} 
                 className="flex-1 py-5 bg-brand-600 text-white rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest shadow-lg shadow-brand-900/10 hover:bg-brand-500 transition-all transform active:scale-[0.98]"
               >
