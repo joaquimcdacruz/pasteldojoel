@@ -462,19 +462,22 @@ const MenuPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Banner se Firestore precisa ser ativado para sincronizar entre navegadores */}
+      {/* Banner se Firestore precisa ser criado no Firebase Console */}
       {firebaseHealth.status === 'api_disabled' && (
-        <div className="bg-amber-500/10 border-2 border-amber-500/40 p-5 rounded-3xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in fade-in duration-300">
-          <div className="flex items-start sm:items-center gap-3">
-            <div className="p-3 bg-amber-500 text-white rounded-2xl shadow-sm shrink-0">
-              <AlertTriangle size={22} />
+        <div className="bg-amber-500/10 border-2 border-amber-500/40 p-6 rounded-3xl flex flex-col md:flex-row items-start md:items-center justify-between gap-5 animate-in fade-in duration-300">
+          <div className="flex items-start gap-4">
+            <div className="p-3.5 bg-amber-500 text-white rounded-2xl shadow-md shrink-0">
+              <AlertTriangle size={24} />
             </div>
-            <div>
-              <h4 className="font-black text-slate-900 text-sm uppercase tracking-wide">
-                Sincronização entre navegadores pausada (Cloud Firestore pendente)
+            <div className="space-y-1">
+              <h4 className="font-black text-slate-900 text-base uppercase tracking-tight">
+                ⚠️ Atenção: Banco de Dados em Nuvem Pendente no Firebase
               </h4>
-              <p className="text-xs text-slate-600 font-medium leading-relaxed">
-                Cada navegador está mostrando dados diferentes porque o banco Cloud Firestore ainda precisa ser criado/ativado no console do Firebase do projeto <strong>{firebaseHealth.projectId || 'pasteldojoel-e3992'}</strong>.
+              <p className="text-xs text-slate-600 font-medium leading-relaxed max-w-2xl">
+                Cada navegador está mostrando um preço diferente porque o <strong>Cloud Firestore</strong> ainda não foi criado no projeto <strong>{firebaseHealth.projectId || 'pasteldojoel-e3992'}</strong> no Firebase Console. Sem ele, as alterações ficam salvas só na memória local de cada navegador.
+              </p>
+              <p className="text-[11px] text-amber-800 font-bold">
+                👉 Basta acessar o link ao lado e clicar em <strong>"Criar banco de dados"</strong>. Todos os navegadores sincronizarão na mesma hora!
               </p>
             </div>
           </div>
@@ -482,10 +485,10 @@ const MenuPage: React.FC = () => {
             href={firebaseHealth.activationUrl || `https://console.firebase.google.com/project/${firebaseHealth.projectId || 'pasteldojoel-e3992'}/firestore`}
             target="_blank"
             rel="noreferrer"
-            className="whitespace-nowrap px-6 py-3.5 bg-amber-600 hover:bg-amber-500 active:scale-95 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-md transition-all flex items-center gap-2"
+            className="whitespace-nowrap px-6 py-4 bg-amber-600 hover:bg-amber-500 active:scale-95 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-amber-900/10 transition-all flex items-center gap-2.5 shrink-0"
           >
-            <ExternalLink size={16} />
-            Ativar Firestore no Console (1 min)
+            <ExternalLink size={18} />
+            Criar Banco no Firebase Console
           </a>
         </div>
       )}

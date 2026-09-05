@@ -180,51 +180,62 @@ export const setFirebaseHealth = (newHealth: FirebaseHealthState) => {
   }
 };
 
-// Check connection on boot
-if (typeof window !== 'undefined' && isFirebaseConfigured() && db) {
-  setTimeout(async () => {
-    try {
-      const { doc, getDoc } = await import('firebase/firestore');
-      const pingDoc = doc(db, '_connection_test', 'ping');
-      const fetchPing = getDoc(pingDoc);
-      const timeoutPing = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('timeout_connection')), 4000)
-      );
-      await Promise.race([fetchPing, timeoutPing]);
-      
-      setFirebaseHealth({
-        status: 'connected',
-        projectId: activeConfig?.projectId,
-      });
-    } catch (err: any) {
-      const msg = err?.message || String(err);
-      if (
-        msg.includes('Cloud Firestore API has not been used') || 
-        msg.includes('it is disabled') ||
-        (err?.code === 'permission-denied' && msg.includes('overview?project='))
-      ) {
+// Check connection on boot and verify if Cloud Firestore database has been created in Firebase Console
+export const verifyFirebaseConnection = async () => {
+  if (!isFirebaseConfigured() || !activeConfig?.projectId || !activeConfig?.apiKey) return;
+
+  try {
+    const checkUrl = `https://firestore.googleapis.com/v1/projects/${activeConfig.projectId}/databases/(default)/documents/test_doc?key=${activeConfig.apiKey}`;
+    const res = await fetch(checkUrl);
+    
+    if (res.status === 404) {
+      const data = await res.json().catch(() => null);
+      const msg = data?.error?.message || '';
+      // If the database itself doesn't exist on Google Cloud
+      if (msg.includes('does not exist') || msg.includes('add a Cloud Datastore or Cloud Firestore database') || msg.includes('NOT_FOUND')) {
         setFirebaseHealth({
           status: 'api_disabled',
-          message: 'O Cloud Firestore não foi ativado no Firebase Console deste projeto.',
-          projectId: activeConfig?.projectId,
-          activationUrl: `https://console.firebase.google.com/project/${activeConfig?.projectId || 'pasteldojoel-e3992'}/firestore`
+          message: `O Banco de Dados Cloud Firestore ainda NÃO foi criado no projeto "${activeConfig.projectId}".`,
+          projectId: activeConfig.projectId,
+          activationUrl: `https://console.firebase.google.com/project/${activeConfig.projectId}/firestore`
         });
-      } else if (msg === 'timeout_connection') {
-        if (currentHealth.status === 'connecting') {
-          // If listeners already connected or pending, set to connected so UI is not locked
-          setFirebaseHealth({
-            status: 'connected',
-            projectId: activeConfig?.projectId
-          });
-        }
-      } else {
+        return;
+      }
+    } else if (res.status === 403) {
+      const data = await res.json().catch(() => null);
+      const msg = data?.error?.message || '';
+      if (msg.includes('Cloud Firestore API has not been used') || msg.includes('disabled')) {
         setFirebaseHealth({
-          status: 'connected',
-          projectId: activeConfig?.projectId
+          status: 'api_disabled',
+          message: `A API do Cloud Firestore precisa ser ativada no projeto "${activeConfig.projectId}".`,
+          projectId: activeConfig.projectId,
+          activationUrl: `https://console.firebase.google.com/project/${activeConfig.projectId}/firestore`
         });
+        return;
       }
     }
-  }, 300);
+
+    // Database exists and responded
+    setFirebaseHealth({
+      status: 'connected',
+      projectId: activeConfig.projectId
+    });
+  } catch (err) {
+    console.warn('[Firebase Health Check]', err);
+  }
+};
+
+if (typeof window !== 'undefined' && isFirebaseConfigured()) {
+  setTimeout(() => {
+    verifyFirebaseConnection();
+  }, 100);
+
+  // If database was not created yet, re-poll every 6 seconds so when the user creates it in Firebase Console, it connects immediately
+  setInterval(() => {
+    if (currentHealth.status === 'api_disabled' || currentHealth.status === 'connecting') {
+      verifyFirebaseConnection();
+    }
+  }, 6000);
 }
 
 export { app, db, auth, analytics };
