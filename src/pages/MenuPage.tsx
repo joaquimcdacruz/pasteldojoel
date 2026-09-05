@@ -123,11 +123,26 @@ const MenuPage: React.FC = () => {
     window.addEventListener('menu-changed', handleMenuChanged);
 
     // Real-time Firebase Firestore subscriptions
-    const unsubMenu = subscribeToCollection('menu_items', () => loadData(true));
-    const unsubFillings = subscribeToCollection('fillings', () => loadData(true));
-    const unsubCats = subscribeToCollection('categories', () => loadData(true));
-    const unsubAddons = subscribeToCollection('addons', () => loadData(true));
-    const unsubMf = subscribeToCollection('menu_item_fillings', () => loadData(true));
+    const unsubMenu = subscribeToCollection('menu_items', (docs) => {
+      const synced = StorageService.syncMenuFromSnapshot(docs);
+      setItems(synced);
+    });
+    const unsubFillings = subscribeToCollection('fillings', (docs) => {
+      const synced = StorageService.syncFillingsFromSnapshot(docs);
+      setFillings(synced);
+    });
+    const unsubCats = subscribeToCollection('categories', (docs) => {
+      const synced = StorageService.syncCategoriesFromSnapshot(docs);
+      setCategories(synced);
+    });
+    const unsubAddons = subscribeToCollection('addons', (docs) => {
+      const synced = StorageService.syncAddonsFromSnapshot(docs);
+      setAddons(synced);
+    });
+    const unsubMf = subscribeToCollection('menu_item_fillings', (docs) => {
+      const synced = StorageService.syncMenuFillingsFromSnapshot(docs);
+      setMenuFillings(synced);
+    });
 
     return () => {
       window.removeEventListener('menu-changed', handleMenuChanged);

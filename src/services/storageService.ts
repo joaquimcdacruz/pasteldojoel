@@ -112,7 +112,7 @@ export const StorageService = {
       description: data.description || '',
       imageUrl: data.imageUrl || '',
       inStock: data.inStock !== false,
-      stockQuantity: data.stockQuantity !== undefined ? Number(data.stockQuantity) : undefined,
+      stockQuantity: (data.stockQuantity !== undefined && data.stockQuantity !== null) ? Number(data.stockQuantity) : undefined,
       order: Number(data.order ?? 999),
       syncStatus: 'synced' as const,
       updatedAt: data.updatedAt || Date.now()
@@ -203,7 +203,7 @@ export const StorageService = {
       name: data.name || '',
       price: Number(data.price || 0),
       inStock: data.inStock !== false,
-      stockQuantity: data.stockQuantity !== undefined ? Number(data.stockQuantity) : undefined,
+      stockQuantity: (data.stockQuantity !== undefined && data.stockQuantity !== null) ? Number(data.stockQuantity) : undefined,
       syncStatus: 'synced' as const,
       updatedAt: data.updatedAt || Date.now()
     }));
@@ -351,6 +351,37 @@ export const StorageService = {
     return remote;
   },
 
+  // ─── Cloud Catalog Auto-Seed ───────────────────────────────────────────
+  ensureCatalogSeededInFirestore: async (): Promise<void> => {
+    if (!isFirebaseConfigured() || !db || !navigator.onLine) return;
+    try {
+      const snap = await getDocs(collection(db, 'menu_items'));
+      if (snap.empty) {
+        console.log("[Firebase] Coleção menu_items vazia no Firestore. Semeando cardápio oficial na nuvem...");
+        const batch = writeBatch(db);
+        DEFAULT_INITIAL_CATEGORIES.forEach(c => {
+          batch.set(doc(db, 'categories', c.id), { ...c, updatedAt: Date.now() }, { merge: true });
+        });
+        DEFAULT_INITIAL_PRODUCTS.forEach(p => {
+          batch.set(doc(db, 'menu_items', p.id), { ...p, updatedAt: Date.now() }, { merge: true });
+        });
+        DEFAULT_INITIAL_FILLINGS.forEach(f => {
+          batch.set(doc(db, 'fillings', f.id), { ...f, updatedAt: Date.now() }, { merge: true });
+        });
+        DEFAULT_INITIAL_ADDONS.forEach(a => {
+          batch.set(doc(db, 'addons', a.id), { ...a, updatedAt: Date.now() }, { merge: true });
+        });
+        DEFAULT_INITIAL_MENU_FILLINGS.forEach(mf => {
+          batch.set(doc(db, 'menu_item_fillings', mf.id), { ...mf, updatedAt: Date.now() }, { merge: true });
+        });
+        await batch.commit();
+        console.log("[Firebase] Cardápio oficial semeado com sucesso no Firestore!");
+      }
+    } catch (e) {
+      console.warn("[Firebase] Aviso ao verificar/semear catálogo no Firestore:", e);
+    }
+  },
+
   // ─── Global Real-time Sync Initializer ──────────────────────────────────
   initGlobalSync: (): (() => void) => {
     if (globalSyncInitialized) return () => {};
@@ -360,6 +391,9 @@ export const StorageService = {
     globalSyncUnsubscribers = [];
 
     try {
+      // 0. Auto-seed catalog to Firestore if cloud collection is empty
+      StorageService.ensureCatalogSeededInFirestore().catch(() => {});
+
       // 1. Orders listener (latest 150 orders)
       globalSyncUnsubscribers.push(
         subscribeToCollection('orders', (docs) => {
@@ -842,6 +876,19 @@ export const StorageService = {
   // ─── Menu & Products ──────────────────────────────────────────────────
 
   getProducts: async (): Promise<MenuItem[]> => {
+    // 1. If Firebase is active and online, fetch from Firestore to guarantee fresh prices across all devices
+    if (isFirebaseConfigured() && db && navigator.onLine) {
+      try {
+        const snap = await getDocs(collection(db, 'menu_items'));
+        if (!snap.empty) {
+          const docs = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+          return StorageService.syncMenuFromSnapshot(docs);
+        }
+      } catch (e) {
+        console.warn("Aviso ao buscar produtos do Firestore:", e);
+      }
+    }
+
     const stored = localStorage.getItem(LS_KEYS.MENU);
     let localProducts = stored ? JSON.parse(stored) : [];
 

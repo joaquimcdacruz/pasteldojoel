@@ -52,21 +52,37 @@ const OrderDetailsPage: React.FC = () => {
 
       // Subscribe to changes in Firebase Firestore
       const unsubOrders = subscribeToCollection('orders', () => loadOrder(id));
-      const unsubMenu = subscribeToCollection('menu_items', () => loadMenuData());
-      const unsubFillings = subscribeToCollection('fillings', () => loadMenuData());
+      const unsubMenu = subscribeToCollection('menu_items', (docs) => {
+        StorageService.syncMenuFromSnapshot(docs);
+        loadMenuData();
+      });
+      const unsubFillings = subscribeToCollection('fillings', (docs) => {
+        StorageService.syncFillingsFromSnapshot(docs);
+        loadMenuData();
+      });
+
+      const handleMenuChanged = () => loadMenuData();
+      window.addEventListener('menu-changed', handleMenuChanged);
 
       loadMenuData();
       setLogo(StorageService.getLogo() || '');
 
       return () => {
+        window.removeEventListener('menu-changed', handleMenuChanged);
         unsubOrders();
         unsubMenu();
         unsubFillings();
       };
 
     } else {
+      const handleMenuChanged = () => loadMenuData();
+      window.addEventListener('menu-changed', handleMenuChanged);
       loadMenuData();
       setLogo(StorageService.getLogo() || '');
+
+      return () => {
+        window.removeEventListener('menu-changed', handleMenuChanged);
+      };
     }
   }, [id]);
 

@@ -168,8 +168,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     ? 'bg-rose-500/20 text-rose-600'
                     : 'bg-slate-500/10 text-slate-600'
                 }`}>
-                    {isSyncing ? (
-                        <RefreshCcw size={14} className="animate-spin text-emerald-600" />
+                    {isSyncing || firebaseHealth.status === 'connecting' ? (
+                        <RefreshCcw size={14} className="animate-spin text-amber-600" />
                     ) : firebaseHealth.status === 'connected' ? (
                         <Flame size={15} className="fill-emerald-500" />
                     ) : firebaseHealth.status === 'api_disabled' ? (
@@ -184,6 +184,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <p className={`text-[9px] font-black uppercase tracking-wider truncate ${
                       firebaseHealth.status === 'connected'
                         ? 'text-emerald-700' 
+                        : firebaseHealth.status === 'connecting'
+                        ? 'text-amber-700'
                         : firebaseHealth.status === 'api_disabled'
                         ? 'text-amber-700'
                         : firebaseHealth.status === 'error'
@@ -192,6 +194,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     }`}>
                         {firebaseHealth.status === 'connected'
                           ? 'Nuvem Conectada' 
+                          : firebaseHealth.status === 'connecting'
+                          ? 'Conectando Nuvem'
                           : firebaseHealth.status === 'api_disabled'
                           ? 'Firestore Pendente'
                           : firebaseHealth.status === 'error'
@@ -201,6 +205,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <p className="text-[8px] text-slate-500 truncate font-bold uppercase tracking-tighter">
                         {firebaseHealth.status === 'connected'
                           ? (isOnline ? 'Tempo Real Ativo' : 'Offline Temporário') 
+                          : firebaseHealth.status === 'connecting'
+                          ? 'Sincronizando...'
                           : firebaseHealth.status === 'api_disabled'
                           ? 'Toque p/ Ativar no Console'
                           : firebaseHealth.status === 'error'

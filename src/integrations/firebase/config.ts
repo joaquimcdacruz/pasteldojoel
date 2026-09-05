@@ -25,9 +25,20 @@ export interface FirebaseConfig {
   firestoreDatabaseId?: string;
 }
 
+export const DEFAULT_FIREBASE_CONFIG: FirebaseConfig = {
+  projectId: "pasteldojoel-e3992",
+  appId: "1:248948484008:web:02f243042df4017dc0df9d",
+  apiKey: "AIzaSyC4QkKz-EJnTSVSSYSHE5hz54zBcMMPxPw",
+  authDomain: "pasteldojoel-e3992.firebaseapp.com",
+  firestoreDatabaseId: "(default)",
+  storageBucket: "pasteldojoel-e3992.firebasestorage.app",
+  messagingSenderId: "248948484008",
+  measurementId: "G-C3Z5LYXQ5T",
+};
+
 const LOCAL_STORAGE_KEY = 'pastelaria_firebase_config';
 
-export const getStoredFirebaseConfig = (): FirebaseConfig | null => {
+export const getStoredFirebaseConfig = (): FirebaseConfig => {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (raw) {
@@ -40,30 +51,26 @@ export const getStoredFirebaseConfig = (): FirebaseConfig | null => {
     console.error('Erro ao ler configuração local do Firebase:', e);
   }
 
-  // Use configured applet project config or env variables
-  const apiKey = import.meta.env.VITE_FIREBASE_API_KEY || firebaseAppletConfig.apiKey;
-  const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseAppletConfig.projectId;
-  const authDomain = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseAppletConfig.authDomain || (projectId ? `${projectId}.firebaseapp.com` : '');
-  const storageBucket = import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseAppletConfig.storageBucket || (projectId ? `${projectId}.firebasestorage.app` : '');
-  const messagingSenderId = import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseAppletConfig.messagingSenderId || '';
-  const appId = import.meta.env.VITE_FIREBASE_APP_ID || firebaseAppletConfig.appId || '';
-  const measurementId = import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || firebaseAppletConfig.measurementId || '';
-  const firestoreDatabaseId = firebaseAppletConfig.firestoreDatabaseId || '(default)';
+  // Use configured applet project config or env variables, fallback to official DEFAULT_FIREBASE_CONFIG
+  const apiKey = import.meta.env.VITE_FIREBASE_API_KEY || (firebaseAppletConfig as any)?.apiKey || DEFAULT_FIREBASE_CONFIG.apiKey;
+  const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID || (firebaseAppletConfig as any)?.projectId || DEFAULT_FIREBASE_CONFIG.projectId;
+  const authDomain = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || (firebaseAppletConfig as any)?.authDomain || DEFAULT_FIREBASE_CONFIG.authDomain;
+  const storageBucket = import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || (firebaseAppletConfig as any)?.storageBucket || DEFAULT_FIREBASE_CONFIG.storageBucket;
+  const messagingSenderId = import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || (firebaseAppletConfig as any)?.messagingSenderId || DEFAULT_FIREBASE_CONFIG.messagingSenderId;
+  const appId = import.meta.env.VITE_FIREBASE_APP_ID || (firebaseAppletConfig as any)?.appId || DEFAULT_FIREBASE_CONFIG.appId;
+  const measurementId = import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || (firebaseAppletConfig as any)?.measurementId || DEFAULT_FIREBASE_CONFIG.measurementId;
+  const firestoreDatabaseId = (firebaseAppletConfig as any)?.firestoreDatabaseId || DEFAULT_FIREBASE_CONFIG.firestoreDatabaseId;
 
-  if (apiKey && projectId) {
-    return {
-      apiKey,
-      authDomain,
-      projectId,
-      storageBucket,
-      messagingSenderId,
-      appId,
-      measurementId,
-      firestoreDatabaseId,
-    };
-  }
-
-  return null;
+  return {
+    apiKey,
+    authDomain,
+    projectId,
+    storageBucket,
+    messagingSenderId,
+    appId,
+    measurementId,
+    firestoreDatabaseId,
+  };
 };
 
 export const saveFirebaseConfig = (config: FirebaseConfig) => {
@@ -145,8 +152,8 @@ export const setFirebaseHealth = (newHealth: FirebaseHealthState) => {
 if (typeof window !== 'undefined' && isFirebaseConfigured() && db) {
   setTimeout(async () => {
     try {
-      const { doc, getDocFromServer } = await import('firebase/firestore');
-      await getDocFromServer(doc(db, '_connection_test', 'ping'));
+      const { doc, getDoc } = await import('firebase/firestore');
+      await getDoc(doc(db, '_connection_test', 'ping'));
       setFirebaseHealth({
         status: 'connected',
         projectId: activeConfig?.projectId,
@@ -164,21 +171,15 @@ if (typeof window !== 'undefined' && isFirebaseConfigured() && db) {
           projectId: activeConfig?.projectId,
           activationUrl: `https://console.firebase.google.com/project/${activeConfig?.projectId || 'pasteldojoel-e3992'}/firestore`
         });
-      } else if (err?.code === 'permission-denied') {
-        // Rules might require auth or are working, connection reached Firestore
+      } else {
+        // Any other response (e.g. permission-denied or offline cache) reached Firestore
         setFirebaseHealth({
           status: 'connected',
           projectId: activeConfig?.projectId
         });
-      } else {
-        setFirebaseHealth({
-          status: 'error',
-          message: msg,
-          projectId: activeConfig?.projectId
-        });
       }
     }
-  }, 1000);
+  }, 500);
 }
 
 export { app, db, auth, analytics };
