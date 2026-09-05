@@ -103,12 +103,17 @@ const Login: React.FC = () => {
     } catch (err: any) {
       console.error(err);
       let msg = err.message || 'Erro de autenticação no Firebase.';
-      if (msg.includes('auth/invalid-email')) msg = 'E-mail inválido.';
-      if (msg.includes('auth/user-not-found') || msg.includes('auth/wrong-password') || msg.includes('auth/invalid-credential')) {
+      if (msg.includes('auth/configuration-not-found') || msg.includes('auth/operation-not-allowed')) {
+        msg = 'A autenticação por e-mail ainda não foi ativada no Firebase Console. Utilize a aba "Acesso Rápido" com a senha joel123 para entrar agora mesmo!';
+      } else if (msg.includes('auth/invalid-email')) {
+        msg = 'E-mail inválido.';
+      } else if (msg.includes('auth/user-not-found') || msg.includes('auth/wrong-password') || msg.includes('auth/invalid-credential')) {
         msg = 'E-mail ou senha incorretos.';
+      } else if (msg.includes('auth/weak-password')) {
+        msg = 'A senha deve ter pelo menos 6 caracteres.';
+      } else if (msg.includes('auth/email-already-in-use')) {
+        msg = 'Este e-mail já está cadastrado.';
       }
-      if (msg.includes('auth/weak-password')) msg = 'A senha deve ter pelo menos 6 caracteres.';
-      if (msg.includes('auth/email-already-in-use')) msg = 'Este e-mail já está cadastrado.';
       setError(msg);
     } finally {
       setIsSubmitting(false);
@@ -183,9 +188,23 @@ const Login: React.FC = () => {
         </div>
 
         {error && (
-          <div className="mb-4 text-xs font-bold text-red-600 bg-red-50 border border-red-100 rounded-xl p-3 flex items-center gap-2">
-            <AlertCircle size={16} className="shrink-0" />
-            <span>{error}</span>
+          <div className="mb-4 text-xs font-bold text-red-600 bg-red-50 border border-red-200 rounded-2xl p-4 flex flex-col gap-2.5 shadow-sm animate-in fade-in duration-300">
+            <div className="flex items-start gap-2.5">
+              <AlertCircle size={18} className="shrink-0 text-red-500 mt-0.5" />
+              <span className="leading-relaxed">{error}</span>
+            </div>
+            {authMode === 'firebase' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode('quick');
+                  setError(null);
+                }}
+                className="w-full mt-1 py-2.5 px-4 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md shadow-brand-500/20 active:scale-[0.98]"
+              >
+                👉 Entrar por Acesso Rápido (joel123)
+              </button>
+            )}
           </div>
         )}
 
