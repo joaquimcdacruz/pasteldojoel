@@ -33,7 +33,7 @@ export const DEFAULT_FIREBASE_CONFIG: FirebaseConfig = {
   appId: "1:248948484008:web:02f243042df4017dc0df9d",
   apiKey: "AIzaSyC4QkKz-EJnTSVSSYSHE5hz54zBcMMPxPw",
   authDomain: "pasteldojoel-e3992.firebaseapp.com",
-  firestoreDatabaseId: "(default)",
+  firestoreDatabaseId: "pasteldojoel",
   storageBucket: "pasteldojoel-e3992.firebasestorage.app",
   messagingSenderId: "248948484008",
   measurementId: "G-C3Z5LYXQ5T",
@@ -42,6 +42,8 @@ export const DEFAULT_FIREBASE_CONFIG: FirebaseConfig = {
 const LOCAL_STORAGE_KEY = 'pastelaria_firebase_config';
 
 export const getStoredFirebaseConfig = (): FirebaseConfig => {
+  const configuredDbId = (firebaseAppletConfig as any)?.firestoreDatabaseId || DEFAULT_FIREBASE_CONFIG.firestoreDatabaseId || 'pasteldojoel';
+
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (raw) {
@@ -56,6 +58,7 @@ export const getStoredFirebaseConfig = (): FirebaseConfig => {
         return {
           ...DEFAULT_FIREBASE_CONFIG,
           ...parsed,
+          firestoreDatabaseId: configuredDbId,
           projectId: DEFAULT_FIREBASE_CONFIG.projectId
         };
       } else {
@@ -75,7 +78,7 @@ export const getStoredFirebaseConfig = (): FirebaseConfig => {
   const messagingSenderId = import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || (firebaseAppletConfig as any)?.messagingSenderId || DEFAULT_FIREBASE_CONFIG.messagingSenderId;
   const appId = import.meta.env.VITE_FIREBASE_APP_ID || (firebaseAppletConfig as any)?.appId || DEFAULT_FIREBASE_CONFIG.appId;
   const measurementId = import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || (firebaseAppletConfig as any)?.measurementId || DEFAULT_FIREBASE_CONFIG.measurementId;
-  const firestoreDatabaseId = (firebaseAppletConfig as any)?.firestoreDatabaseId || DEFAULT_FIREBASE_CONFIG.firestoreDatabaseId;
+  const firestoreDatabaseId = configuredDbId;
 
   return {
     apiKey,
@@ -119,17 +122,19 @@ if (activeConfig && activeConfig.apiKey && activeConfig.projectId) {
       app = getApp();
     }
 
+    const targetDatabaseId = activeConfig.firestoreDatabaseId || 'pasteldojoel';
+
     // Try multi-tab persistent cache to sync between multiple browser tabs/windows seamlessly
     try {
       db = initializeFirestore(app, {
         localCache: persistentLocalCache({
           tabManager: persistentMultipleTabManager()
         })
-      });
+      }, targetDatabaseId);
     } catch (cacheErr) {
-      if (activeConfig.firestoreDatabaseId && activeConfig.firestoreDatabaseId !== '(default)') {
-        db = getFirestore(app, activeConfig.firestoreDatabaseId);
-      } else {
+      try {
+        db = getFirestore(app, targetDatabaseId);
+      } catch (getDbErr) {
         db = getFirestore(app);
       }
     }
@@ -184,8 +189,10 @@ export const setFirebaseHealth = (newHealth: FirebaseHealthState) => {
 export const verifyFirebaseConnection = async () => {
   if (!isFirebaseConfigured() || !activeConfig?.projectId || !activeConfig?.apiKey) return;
 
+  const targetDb = activeConfig.firestoreDatabaseId || 'pasteldojoel';
+
   try {
-    const checkUrl = `https://firestore.googleapis.com/v1/projects/${activeConfig.projectId}/databases/(default)/documents/test_doc?key=${activeConfig.apiKey}`;
+    const checkUrl = `https://firestore.googleapis.com/v1/projects/${activeConfig.projectId}/databases/${targetDb}/documents/test_doc?key=${activeConfig.apiKey}`;
     const res = await fetch(checkUrl);
     
     if (res.status === 404) {
@@ -193,9 +200,24 @@ export const verifyFirebaseConnection = async () => {
       const msg = data?.error?.message || '';
       // If the database itself doesn't exist on Google Cloud
       if (msg.includes('does not exist') || msg.includes('add a Cloud Datastore or Cloud Firestore database') || msg.includes('NOT_FOUND')) {
+        // Also check if (default) exists
+        if (targetDb !== '(default)') {
+          const defaultCheckUrl = `https://firestore.googleapis.com/v1/projects/${activeConfig.projectId}/databases/(default)/documents/test_doc?key=${activeConfig.apiKey}`;
+          const defaultRes = await fetch(defaultCheckUrl).catch(() => null);
+          if (defaultRes && defaultRes.status !== 404) {
+            // (default) exists! Switch to (default)
+            console.log('[Firebase] Banco (default) detectado ativo. Conectando a (default)...');
+            setFirebaseHealth({
+              status: 'connected',
+              projectId: activeConfig.projectId
+            });
+            return;
+          }
+        }
+
         setFirebaseHealth({
           status: 'api_disabled',
-          message: `O Banco de Dados Cloud Firestore ainda NÃO foi criado no projeto "${activeConfig.projectId}".`,
+          message: `O banco de dados "${targetDb}" ainda precisa ser reconhecido ou criado com ID "(default)" no plano Spark gratuito do Firebase.`,
           projectId: activeConfig.projectId,
           activationUrl: `https://console.firebase.google.com/project/${activeConfig.projectId}/firestore`
         });
