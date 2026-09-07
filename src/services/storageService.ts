@@ -616,35 +616,39 @@ export const StorageService = {
     const found = orders.find(o => o.id === id && !deletedIds.has(o.id));
     if (found) return found;
 
-    if (isFirebaseConfigured() && db) {
+    if (isFirebaseConfigured() && db && navigator.onLine) {
       try {
         const docRef = doc(db, 'orders', id);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data() as any;
-          return {
-            id: docSnap.id,
-            customerName: data.customerName || 'Cliente',
-            status: data.status || OrderStatus.OPEN,
-            createdAt: data.createdAt || Date.now(),
-            closedAt: data.closedAt || null,
-            discount: Number(data.discount || 0),
-            subtotal: Number(data.subtotal || 0),
-            total: Number(data.total || 0),
-            paymentMethod: data.paymentMethod || null,
-            paymentAmountReceived: data.paymentAmountReceived ? Number(data.paymentAmountReceived) : null,
-            change: data.change ? Number(data.change) : null,
-            orderType: data.orderType as OrderType | undefined,
-            createdBy: data.createdBy || null,
-            sellerName: data.sellerName || null,
-            stockDecremented: !!data.stockDecremented,
-            fiadoAccounted: !!data.fiadoAccounted,
-            payments: data.payments || [],
-            items: Array.isArray(data.items) ? data.items : [],
-            syncStatus: 'synced',
-            updatedAt: data.updatedAt || Date.now()
-          };
-        }
+        const fetchPromise = getDoc(docRef).then(docSnap => {
+          if (docSnap.exists()) {
+            const data = docSnap.data() as any;
+            return {
+              id: docSnap.id,
+              customerName: data.customerName || 'Cliente',
+              status: data.status || OrderStatus.OPEN,
+              createdAt: data.createdAt || Date.now(),
+              closedAt: data.closedAt || null,
+              discount: Number(data.discount || 0),
+              subtotal: Number(data.subtotal || 0),
+              total: Number(data.total || 0),
+              paymentMethod: data.paymentMethod || null,
+              paymentAmountReceived: data.paymentAmountReceived ? Number(data.paymentAmountReceived) : null,
+              change: data.change ? Number(data.change) : null,
+              orderType: data.orderType as OrderType | undefined,
+              createdBy: data.createdBy || null,
+              sellerName: data.sellerName || null,
+              stockDecremented: !!data.stockDecremented,
+              fiadoAccounted: !!data.fiadoAccounted,
+              payments: data.payments || [],
+              items: Array.isArray(data.items) ? data.items : [],
+              syncStatus: 'synced' as const,
+              updatedAt: data.updatedAt || Date.now()
+            };
+          }
+          return null;
+        });
+        const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 1000));
+        return await Promise.race([fetchPromise, timeoutPromise]);
       } catch (e) {
         console.warn("Firebase getOrderById error:", e);
       }
@@ -883,19 +887,6 @@ export const StorageService = {
   // ─── Menu & Products ──────────────────────────────────────────────────
 
   getProducts: async (): Promise<MenuItem[]> => {
-    // 1. If Firebase is active and online, fetch from Firestore to guarantee fresh prices across all devices
-    if (isFirebaseConfigured() && db && navigator.onLine) {
-      try {
-        const snap = await getDocs(collection(db, 'menu_items'));
-        if (!snap.empty) {
-          const docs = snap.docs.map(d => ({ ...d.data(), id: d.id }));
-          return StorageService.syncMenuFromSnapshot(docs);
-        }
-      } catch (e) {
-        console.warn("Aviso ao buscar produtos do Firestore:", e);
-      }
-    }
-
     const stored = localStorage.getItem(LS_KEYS.MENU);
     let localProducts = stored ? JSON.parse(stored) : [];
 
@@ -924,6 +915,20 @@ export const StorageService = {
         inStock: p.inStock !== false
       };
     });
+
+    // Se Firebase estiver ativo e online, sincroniza em segundo plano sem bloquear a navegação
+    if (isFirebaseConfigured() && db && navigator.onLine) {
+      getDocs(collection(db, 'menu_items'))
+        .then(snap => {
+          if (!snap.empty) {
+            const docs = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+            StorageService.syncMenuFromSnapshot(docs);
+          }
+        })
+        .catch(e => {
+          console.warn("Aviso ao sincronizar produtos em segundo plano:", e);
+        });
+    }
 
     return localProducts;
   },

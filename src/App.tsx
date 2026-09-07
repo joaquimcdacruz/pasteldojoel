@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import OrdersPage from '@/pages/OrdersPage';
 import MenuPage from '@/pages/MenuPage';
@@ -15,8 +15,8 @@ import { AuthProvider, useAuth } from '@/components/AuthProvider';
 import { UserRole } from '@/types';
 import { StorageService } from '@/services/storageService';
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode, allowedRoles?: UserRole[] }> = ({ children, allowedRoles }) => {
-  const { session, profile, loading } = useAuth();
+const AuthenticatedAppLayout: React.FC = () => {
+  const { session, loading } = useAuth();
   
   if (loading) {
     return (
@@ -27,14 +27,22 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode, allowedRoles?: UserR
   }
   
   if (!session) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" replace />;
   }
 
-  if (allowedRoles && profile && !allowedRoles.includes(profile.role)) {
-    return <Navigate to="/" />;
+  return (
+    <Layout>
+      <Outlet />
+    </Layout>
+  );
+};
+
+const RoleGuard: React.FC<{ children: React.ReactNode, allowedRoles: UserRole[] }> = ({ children, allowedRoles }) => {
+  const { profile } = useAuth();
+  if (profile && !allowedRoles.includes(profile.role)) {
+    return <Navigate to="/" replace />;
   }
-  
-  return <Layout>{children}</Layout>;
+  return <>{children}</>;
 };
 
 const App: React.FC = () => {
@@ -49,49 +57,17 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/login" element={<Login />} />
           
-          <Route path="/" element={
-            <ProtectedRoute>
-              <OrdersPage />
-            </ProtectedRoute>
-          } />
+          <Route element={<AuthenticatedAppLayout />}>
+            <Route path="/" element={<OrdersPage />} />
+            <Route path="/orders/:id" element={<OrderDetailsPage />} />
+            <Route path="/menu" element={<RoleGuard allowedRoles={['admin']}><MenuPage /></RoleGuard>} />
+            <Route path="/cash-register" element={<RoleGuard allowedRoles={['admin']}><CashRegisterPage /></RoleGuard>} />
+            <Route path="/customers" element={<RoleGuard allowedRoles={['admin']}><CustomersPage /></RoleGuard>} />
+            <Route path="/reports" element={<RoleGuard allowedRoles={['admin']}><ReportsPage /></RoleGuard>} />
+            <Route path="/settings" element={<RoleGuard allowedRoles={['admin']}><SettingsPage /></RoleGuard>} />
+          </Route>
           
-          <Route path="/orders/:id" element={
-            <ProtectedRoute>
-              <OrderDetailsPage />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/menu" element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <MenuPage />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/cash-register" element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <CashRegisterPage />
-            </ProtectedRoute>
-          } />
-
-          <Route path="/customers" element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <CustomersPage />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/reports" element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <ReportsPage />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/settings" element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <SettingsPage />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="*" element={<Navigate to="/" />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
     </HashRouter>

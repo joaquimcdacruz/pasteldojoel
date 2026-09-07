@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
 import { LayoutDashboard, UtensilsCrossed, BarChart3, Wallet, Settings, Wifi, WifiOff, RefreshCcw, LogOut, Users, Flame, Cloud } from 'lucide-react';
 import { StorageService } from '@/services/storageService';
 import { useSync } from '@/hooks/useSync';
@@ -11,7 +11,7 @@ import { isFirebaseConfigured, getFirebaseHealth, FirebaseHealthState } from '@/
 import { AlertTriangle } from 'lucide-react';
 
 interface LayoutProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
@@ -273,7 +273,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
       <main className="flex-1 overflow-y-auto print:overflow-visible px-4 py-6 lg:px-8 print:p-0 print:m-0 relative h-screen print:h-auto pb-32 lg:pb-8">
           <div className="max-w-[1400px] mx-auto animate-in fade-in slide-in-from-bottom-2 duration-300 print:max-w-none print:w-full">
-            {children}
+            {children ?? <Outlet />}
           </div>
       </main>
     </div>

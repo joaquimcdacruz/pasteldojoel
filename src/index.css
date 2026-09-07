@@ -126,23 +126,53 @@ body {
 
 @media print {
   @page {
-    margin: 0;
-    size: 80mm 3000mm;
+    size: 80mm auto;
+    margin: 0mm;
   }
 
-  html, body, #root {
+  html, body {
     margin: 0 !important;
     padding: 0 !important;
-    height: auto !important;
-    min-height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
-    background-color: white !important;
-    color: black !important;
+    width: 80mm !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
-  tr {
+  /* Oculta estritamente toda a aplicação padrão no modo de impressão */
+  #root {
+    display: none !important;
+  }
+
+  /* Portal de impressão térmico 80mm */
+  #print-portal {
+    display: block !important;
+    width: 80mm !important;
+    max-width: 80mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+  }
+
+  #print-receipt,
+  #print-daily-report,
+  #print-customer-receipt {
+    display: block !important;
+    width: 76mm !important;
+    max-width: 76mm !important;
+    margin: 0 auto !important;
+    padding: 1mm 2mm 8mm 2mm !important;
+    box-sizing: border-box !important;
     page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  tr, .print-avoid-break {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   * {
