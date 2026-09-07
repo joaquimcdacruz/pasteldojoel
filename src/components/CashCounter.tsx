@@ -61,17 +61,17 @@ const CashCounter: React.FC<CashCounterProps> = ({ onChange, initialBreakdown })
         </div>
         <div className="grid grid-cols-2 gap-3">
             {denominations.filter(d => d.type === 'bill').map((d) => (
-            <div key={d.key} className="glass-card p-3 rounded-2xl border border-white/5 flex items-center justify-between group hover:border-brand-500/30 transition-all duration-300">
+            <div key={d.key} className="bg-slate-50 p-3 rounded-2xl border border-slate-200 flex items-center justify-between group hover:border-brand-500/50 transition-all duration-300">
                 <div className="flex flex-col">
-                    <p className="text-[8px] font-black text-gray-500 uppercase tracking-widest leading-none mb-1">R$</p>
-                    <p className="text-sm font-black text-white font-display leading-none">{d.label}</p>
+                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">R$</p>
+                    <p className="text-sm font-black text-slate-900 font-display leading-none">{d.label}</p>
                 </div>
 
                 <div className="flex items-center gap-1.5 px-1">
                 <button 
                     type="button"
                     onClick={() => updateQty(d.key as keyof CashBreakdown, -1)}
-                    className="w-7 h-7 rounded-lg bg-white/5 border border-white/5 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 active:scale-90 transition-all"
+                    className="w-7 h-7 rounded-lg bg-slate-200/80 border border-slate-300/60 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-300 active:scale-90 transition-all cursor-pointer"
                 >
                     <Minus size={12} />
                 </button>
@@ -81,13 +81,13 @@ const CashCounter: React.FC<CashCounterProps> = ({ onChange, initialBreakdown })
                     value={breakdown[d.key as keyof CashBreakdown] || ''}
                     onChange={(e) => handleInputChange(d.key as keyof CashBreakdown, e.target.value)}
                     placeholder="0"
-                    className="w-10 bg-transparent border-b border-white/10 text-center font-bold text-white outline-none focus:border-brand-500 transition-all text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    className="w-10 bg-transparent border-b border-slate-300 text-center font-bold text-slate-900 outline-none focus:border-brand-500 transition-all text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
 
                 <button 
                     type="button"
                     onClick={() => updateQty(d.key as keyof CashBreakdown, 1)}
-                    className="w-7 h-7 rounded-lg bg-brand-600/20 border border-brand-600/20 flex items-center justify-center text-brand-500 hover:text-white hover:bg-brand-600 active:scale-90 transition-all"
+                    className="w-7 h-7 rounded-lg bg-brand-50 border border-brand-200 flex items-center justify-center text-brand-600 hover:text-white hover:bg-brand-600 active:scale-90 transition-all cursor-pointer"
                 >
                     <Plus size={12} />
                 </button>
@@ -105,17 +105,17 @@ const CashCounter: React.FC<CashCounterProps> = ({ onChange, initialBreakdown })
         </div>
         <div className="grid grid-cols-2 gap-3">
             {denominations.filter(d => d.type === 'coin').map((d) => (
-            <div key={d.key} className="glass-card p-3 rounded-2xl border border-white/5 flex items-center justify-between group hover:border-brand-500/30 transition-all duration-300">
+            <div key={d.key} className="bg-slate-50 p-3 rounded-2xl border border-slate-200 flex items-center justify-between group hover:border-brand-500/50 transition-all duration-300">
                 <div className="flex flex-col">
-                    <p className="text-[8px] font-black text-gray-500 uppercase tracking-widest leading-none mb-1">R$</p>
-                    <p className="text-sm font-black text-white font-display leading-none">{d.label}</p>
+                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">R$</p>
+                    <p className="text-sm font-black text-slate-900 font-display leading-none">{d.label}</p>
                 </div>
 
                 <div className="flex items-center gap-1.5 px-1">
                 <button 
                     type="button"
                     onClick={() => updateQty(d.key as keyof CashBreakdown, -1)}
-                    className="w-7 h-7 rounded-lg bg-white/5 border border-white/5 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 active:scale-90 transition-all"
+                    className="w-7 h-7 rounded-lg bg-slate-200/80 border border-slate-300/60 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-300 active:scale-90 transition-all cursor-pointer"
                 >
                     <Minus size={12} />
                 </button>
@@ -125,13 +125,13 @@ const CashCounter: React.FC<CashCounterProps> = ({ onChange, initialBreakdown })
                     value={breakdown[d.key as keyof CashBreakdown] || ''}
                     onChange={(e) => handleInputChange(d.key as keyof CashBreakdown, e.target.value)}
                     placeholder="0"
-                    className="w-10 bg-transparent border-b border-white/10 text-center font-bold text-white outline-none focus:border-brand-500 transition-all text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    className="w-10 bg-transparent border-b border-slate-300 text-center font-bold text-slate-900 outline-none focus:border-brand-500 transition-all text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
 
                 <button 
                     type="button"
                     onClick={() => updateQty(d.key as keyof CashBreakdown, 1)}
-                    className="w-7 h-7 rounded-lg bg-brand-600/20 border border-brand-600/20 flex items-center justify-center text-brand-500 hover:text-white hover:bg-brand-600 active:scale-90 transition-all"
+                    className="w-7 h-7 rounded-lg bg-brand-50 border border-brand-200 flex items-center justify-center text-brand-600 hover:text-white hover:bg-brand-600 active:scale-90 transition-all cursor-pointer"
                 >
                     <Plus size={12} />
                 </button>

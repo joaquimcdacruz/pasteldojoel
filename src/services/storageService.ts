@@ -805,6 +805,32 @@ export const StorageService = {
     await setDoc(docRef, orderData, { merge: true });
   },
 
+  renameOrderCustomerName: async (orderId: string, newCustomerName: string): Promise<Order | null> => {
+    const trimmedName = newCustomerName.trim();
+    if (!trimmedName) return null;
+
+    let orders: Order[] = [];
+    try {
+      orders = JSON.parse(localStorage.getItem(LS_KEYS.ORDERS) || '[]');
+    } catch {
+      orders = [];
+    }
+
+    let targetOrder = orders.find(o => o && o.id === orderId);
+    if (!targetOrder) {
+      targetOrder = await StorageService.getOrderById(orderId);
+    }
+    if (!targetOrder) return null;
+
+    const updatedOrder: Order = {
+      ...targetOrder,
+      customerName: trimmedName,
+      updatedAt: Date.now()
+    };
+
+    return await StorageService.saveOrder(updatedOrder);
+  },
+
   deleteOrder: async (id: string): Promise<void> => {
     let orders: Order[] = [];
     try {
@@ -1940,18 +1966,21 @@ export const StorageService = {
   },
 
   isSessionUnlocked: (): boolean => {
-    return sessionStorage.getItem('session_unlocked') === 'true';
+    return sessionStorage.getItem('session_unlocked') === 'true' || localStorage.getItem('session_unlocked') === 'true';
   },
 
   setSessionUnlocked: (unlocked: boolean) => {
     if (unlocked) {
       sessionStorage.setItem('session_unlocked', 'true');
+      localStorage.setItem('session_unlocked', 'true');
     } else {
       sessionStorage.removeItem('session_unlocked');
+      localStorage.removeItem('session_unlocked');
     }
   },
 
   lockSession: () => {
     sessionStorage.removeItem('session_unlocked');
+    localStorage.removeItem('session_unlocked');
   }
 };

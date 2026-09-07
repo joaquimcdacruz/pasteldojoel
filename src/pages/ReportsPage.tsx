@@ -11,7 +11,7 @@ import {
   TrendingUp, DollarSign, RefreshCw, Package,
   Wallet, Calendar, ShoppingBag, ArrowUpRight,
   UtensilsCrossed, UserCheck, ChevronLeft, ChevronRight,
-  PercentIcon, ListOrdered, Printer, Loader2
+  PercentIcon, ListOrdered, Printer, Loader2, Lock
 } from 'lucide-react';
 import DailyReportReceipt from '@/components/reports/DailyReportReceipt';
 import { PaymentMethod } from '@/types';
@@ -42,8 +42,16 @@ const ReportsPage: React.FC = () => {
   const [sellerFilter, setSellerFilter] = useState<string>('all');
   const [page, setPage] = useState(0);
 
-  // Lock State
-  const [isUnlocked, setIsUnlocked] = useState(StorageService.isSessionUnlocked());
+  // Lock State: se já for admin ou tiver desbloqueado na sessão, entra diretamente
+  const [isUnlocked, setIsUnlocked] = useState(() => {
+    return StorageService.isSessionUnlocked() || profile?.role === 'admin';
+  });
+
+  useEffect(() => {
+    if (isAdmin || StorageService.isSessionUnlocked()) {
+      setIsUnlocked(true);
+    }
+  }, [isAdmin]);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -201,6 +209,18 @@ const ReportsPage: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          <button 
+            onClick={() => {
+              StorageService.setSessionUnlocked(false);
+              setIsUnlocked(false);
+            }}
+            className="flex items-center gap-2 bg-black/[0.02] border border-black/[0.05] text-slate-700 text-[10px] font-black uppercase tracking-widest px-4 py-3 rounded-xl hover:bg-black/5 hover:border-slate-300 transition-all shadow-sm"
+            title="Bloquear tela com senha"
+          >
+            <Lock size={14} className="text-slate-500" />
+            Bloquear
+          </button>
+
           {(dateFilter === 'today' || dateFilter === 'custom') && closedOrders.length > 0 && (
             <button 
               onClick={() => window.print()}

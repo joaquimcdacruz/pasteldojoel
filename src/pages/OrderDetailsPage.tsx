@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Loader2, Receipt as ReceiptIcon, Trash2 } from 'lucide-react';
+import { ChevronLeft, Loader2, Receipt as ReceiptIcon, Trash2, Pencil } from 'lucide-react';
 import { Order, OrderStatus, OrderItem, MenuItem, Addon, Filling, MenuItemFilling, PaymentMethod, CategoryItem, OrderType, Payment, DEFAULT_CATEGORIES } from '@/types';
 import { StorageService } from '@/services/storageService';
 import { subscribeToCollection } from '@/integrations/firebase/config';
@@ -13,6 +13,7 @@ import MenuSelection from '@/components/orders/MenuSelection';
 import PaymentModal from '@/components/modals/PaymentModal';
 import Receipt from '@/components/orders/Receipt';
 import ConfirmationModal from '@/components/modals/ConfirmationModal';
+import RenameOrderModal from '@/components/modals/RenameOrderModal';
 
 const OrderDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +26,8 @@ const OrderDetailsPage: React.FC = () => {
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
   
   // Item States
   const [editingItem, setEditingItem] = useState<OrderItem | null>(null);
@@ -384,6 +387,23 @@ const OrderDetailsPage: React.FC = () => {
     }
   };
 
+  const handleRenameOrder = async (newName: string) => {
+    if (!order || !newName.trim() || isRenaming) return;
+    try {
+      setIsRenaming(true);
+      const updated = await StorageService.renameOrderCustomerName(order.id, newName.trim());
+      if (updated) {
+        setOrder(updated);
+      }
+      setIsRenameModalOpen(false);
+    } catch (e) {
+      console.error("Erro ao renomear comanda:", e);
+      alert("Erro ao renomear comanda. Tente novamente.");
+    } finally {
+      setIsRenaming(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="h-[calc(100vh-1rem)] w-full flex flex-col items-center justify-center bg-slate-50 backdrop-blur-sm rounded-[2.5rem] border border-black/[0.05] animate-in fade-in duration-200">
@@ -425,9 +445,19 @@ const OrderDetailsPage: React.FC = () => {
             <ChevronLeft size={18} className="group-hover:-translate-x-1 transition-transform"/> Painel 
         </button>
         <div className="text-center">
-            <h2 className="text-3xl lg:text-4xl font-black font-display text-slate-900 flex items-center gap-3 uppercase italic tracking-tight">
-                {(order.customerName || '').replace(/^X\s*/i, '')}
-            </h2>
+            <button
+              type="button"
+              onClick={() => setIsRenameModalOpen(true)}
+              className="group inline-flex items-center gap-2.5 px-3 py-1.5 -my-1 rounded-2xl hover:bg-slate-200/70 transition-all cursor-pointer text-left"
+              title="Clique para renomear a comanda"
+            >
+              <h2 className="text-3xl lg:text-4xl font-black font-display text-slate-900 group-hover:text-brand-600 flex items-center gap-3 uppercase italic tracking-tight transition-colors">
+                  {(order.customerName || '').replace(/^X\s*/i, '')}
+              </h2>
+              <span className="p-1.5 rounded-xl text-slate-400 group-hover:text-brand-600 group-hover:bg-brand-50 transition-all">
+                <Pencil size={18} />
+              </span>
+            </button>
         </div>
         <div className="flex items-center gap-3">
             <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] border transition-all duration-500 ${isOpen ? 'bg-green-600/10 text-green-600 border-green-500/20 shadow-sm' : 'bg-slate-200 text-slate-600 border-black/5 uppercase'}`}>
@@ -547,6 +577,15 @@ const OrderDetailsPage: React.FC = () => {
         isLoading={isDeleting}
         onConfirm={handleDeleteOrder}
         onCancel={() => !isDeleting && setIsDeleteModalOpen(false)}
+      />
+
+      <RenameOrderModal
+        isOpen={isRenameModalOpen}
+        currentCustomerName={order.customerName}
+        orderId={order.id}
+        isLoading={isRenaming}
+        onConfirm={handleRenameOrder}
+        onCancel={() => !isRenaming && setIsRenameModalOpen(false)}
       />
     </div>
   );

@@ -6,9 +6,10 @@ import { StorageService } from '@/services/storageService';
 import { useAuth } from '@/components/AuthProvider';
 import { subscribeToCollection } from '@/integrations/firebase/config';
 import { useSync } from '@/hooks/useSync';
-import { Cloud, CloudOff, RefreshCw, Plus, User, Clock, Search, ChevronRight, Loader2, UserCheck, WifiOff, Trash2 } from 'lucide-react';
+import { Cloud, CloudOff, RefreshCw, Plus, User, Clock, Search, ChevronRight, Loader2, UserCheck, WifiOff, Trash2, Pencil } from 'lucide-react';
 import { Order, OrderStatus, OrderType } from '@/types';
 import ConfirmationModal from '@/components/modals/ConfirmationModal';
+import RenameOrderModal from '@/components/modals/RenameOrderModal';
 
 const OrdersPage: React.FC = () => {
   const navigate = useNavigate();
@@ -38,6 +39,10 @@ const OrdersPage: React.FC = () => {
   const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const [orderToRename, setOrderToRename] = useState<Order | null>(null);
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
 
   useEffect(() => {
     loadOrders(true);
@@ -127,6 +132,24 @@ const OrdersPage: React.FC = () => {
     }
   };
 
+  const handleRenameOrder = async (newName: string) => {
+    if (!orderToRename || !newName.trim() || isRenaming) return;
+    try {
+      setIsRenaming(true);
+      const updated = await StorageService.renameOrderCustomerName(orderToRename.id, newName.trim());
+      if (updated) {
+        setOrders(prev => prev.map(o => o.id === updated.id ? updated : o));
+      }
+      setIsRenameModalOpen(false);
+      setOrderToRename(null);
+    } catch (e) {
+      console.error("Erro ao renomear comanda:", e);
+      alert("Erro ao renomear comanda. Tente novamente.");
+    } finally {
+      setIsRenaming(false);
+    }
+  };
+
   const handleCreateOrder = async () => {
     if (!newCustomerName.trim()) return;
     
@@ -203,7 +226,7 @@ const OrdersPage: React.FC = () => {
             />
            </div>
 
-           <div className="glass-card p-1 rounded-xl flex border border-white/[0.08]">
+           <div className="bg-white p-1 rounded-xl flex border border-black/[0.08] shadow-sm">
             {[OrderStatus.OPEN, OrderStatus.CLOSED, 'ALL'].map((f) => (
               <button
                 key={f}
@@ -269,18 +292,32 @@ const OrdersPage: React.FC = () => {
                         </h3>
                         <p className="text-[10px] text-slate-500 font-bold tracking-[0.2em] uppercase mb-3">{order.id.slice(0,5)}</p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setOrderToDelete(order);
-                        setIsDeleteModalOpen(true);
-                      }}
-                      className="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all shrink-0 -mr-1 -mt-1 z-20"
-                      title="Excluir comanda"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    <div className="flex items-center gap-1 shrink-0 -mr-1 -mt-1 z-20">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOrderToRename(order);
+                          setIsRenameModalOpen(true);
+                        }}
+                        className="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-xl transition-all cursor-pointer"
+                        title="Renomear cliente da comanda"
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOrderToDelete(order);
+                          setIsDeleteModalOpen(true);
+                        }}
+                        className="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
+                        title="Excluir comanda"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                 </div>
                 
                 <div className="flex flex-wrap items-center gap-2">
@@ -387,6 +424,20 @@ const OrdersPage: React.FC = () => {
         isLoading={isDeleting}
         onConfirm={handleDeleteOrder}
         onCancel={() => !isDeleting && setIsDeleteModalOpen(false)}
+      />
+
+      <RenameOrderModal
+        isOpen={isRenameModalOpen}
+        currentCustomerName={orderToRename?.customerName || ''}
+        orderId={orderToRename?.id}
+        isLoading={isRenaming}
+        onConfirm={handleRenameOrder}
+        onCancel={() => {
+          if (!isRenaming) {
+            setIsRenameModalOpen(false);
+            setOrderToRename(null);
+          }
+        }}
       />
     </div>
   );
