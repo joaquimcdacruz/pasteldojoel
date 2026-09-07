@@ -3,6 +3,11 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
+import { registerSW } from 'virtual:pwa-register';
+
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  registerSW({ immediate: true });
+}
 
 // Proteção contra falhas fatais causadas por extensões do navegador ou Google Tradutor
 // que manipulam nós do DOM enquanto o reconciliador do React tenta reordenar elementos

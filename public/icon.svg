@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="pastelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+  </defs>
+  <!-- Background rounded squircle -->
+  <rect width="512" height="512" rx="128" fill="url(#brandGrad)" />
+  
+  <!-- Pastel Icon Silhouette with crimped edges -->
+  <g transform="translate(64, 80) scale(0.75)">
+    <!-- Golden fried pastel body -->
+    <path d="M 60 380 Q 256 120 452 380 Z" fill="url(#pastelGrad)" stroke="#b45309" stroke-width="12" stroke-linejoin="round" />
+    <!-- Fork crimp marks along the curved edge -->
+    <line x1="80" y1="365" x2="90" y2="390" stroke="#78350f" stroke-width="8" stroke-linecap="round" />
+    <line x1="110" y1="340" x2="125" y2="365" stroke="#78350f" stroke-width="8" stroke-linecap="round" />
+    <line x1="145" y1="315" x2="165" y2="340" stroke="#78350f" stroke-width="8" stroke-linecap="round" />
+    <line x1="185" y1="290" x2="210" y2="315" stroke="#78350f" stroke-width="8" stroke-linecap="round" />
+    <line x1="230" y1="270" x2="256" y2="295" stroke="#78350f" stroke-width="8" stroke-linecap="round" />
+    <line x1="282" y1="270" x2="256" y2="295" stroke="#78350f" stroke-width="8" stroke-linecap="round" />
+    <line x1="327" y1="290" x2="302" y2="315" stroke="#78350f" stroke-width="8" stroke-linecap="round" />
+    <line x1="367" y1="315" x2="347" y2="340" stroke="#78350f" stroke-width="8" stroke-linecap="round" />
+    <line x1="402" y1="340" x2="387" y2="365" stroke="#78350f" stroke-width="8" stroke-linecap="round" />
+    <line x1="432" y1="365" x2="422" y2="390" stroke="#78350f" stroke-width="8" stroke-linecap="round" />
+    <!-- Crisp bubbles on crust -->
+    <circle cx="210" cy="340" r="12" fill="#fbbf24" opacity="0.8" />
+    <circle cx="290" cy="335" r="16" fill="#fbbf24" opacity="0.8" />
+    <circle cx="250" cy="355" r="9" fill="#fef3c7" opacity="0.9" />
+  </g>
+  <!-- Brand text lettermark J -->
+  <text x="256" y="440" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="64" fill="#ffffff" text-anchor="middle" letter-spacing="4">JOEL</text>
+</svg>

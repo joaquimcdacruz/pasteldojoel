@@ -282,42 +282,52 @@ const OrdersPage: React.FC = () => {
               <div className="absolute -top-10 -right-10 w-32 h-32 bg-brand-600/5 blur-[50px] group-hover:bg-brand-600/20 transition-all duration-700 rounded-full" />
               
               <div className="relative z-10 mb-4">
-                <div className="flex items-start gap-4 mb-3">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-700 group-hover:scale-110 group-hover:rotate-6 border border-black/5 shrink-0 ${isOpen ? 'bg-gradient-to-br from-black/[0.02] to-transparent text-brand-500' : 'bg-black/[0.01] text-slate-400'}`}>
-                      <User size={24} />
+                {/* Cabeçalho da comanda: Avatar, ID e Ações */}
+                <div className="flex items-center justify-between gap-3 mb-2.5">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-700 group-hover:scale-105 border border-black/5 shrink-0 ${isOpen ? 'bg-gradient-to-br from-black/[0.02] to-transparent text-brand-500' : 'bg-black/[0.01] text-slate-400'}`}>
+                      <User size={20} />
                     </div>
-                    <div className="min-w-0 flex-1">
-                        <h3 className="font-black text-slate-900 text-2xl lg:text-3xl font-display uppercase tracking-tight group-hover:text-brand-500 transition-colors leading-tight mb-2 break-all overflow-visible whitespace-normal block">
-                          {order.customerName.replace(/^X\s*/i, '')}
-                        </h3>
-                        <p className="text-[10px] text-slate-500 font-bold tracking-[0.2em] uppercase mb-3">{order.id.slice(0,5)}</p>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0 -mr-1 -mt-1 z-20">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOrderToRename(order);
-                          setIsRenameModalOpen(true);
-                        }}
-                        className="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-xl transition-all cursor-pointer"
-                        title="Renomear cliente da comanda"
-                      >
-                        <Pencil size={16} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOrderToDelete(order);
-                          setIsDeleteModalOpen(true);
-                        }}
-                        className="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
-                        title="Excluir comanda"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
+                    <span className="text-[10px] text-slate-400 font-bold tracking-[0.2em] uppercase font-mono truncate">
+                      ID_{order.id.slice(0, 5).toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0 -mr-1 z-20">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOrderToRename(order);
+                        setIsRenameModalOpen(true);
+                      }}
+                      className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-xl transition-all cursor-pointer"
+                      title="Renomear cliente da comanda"
+                    >
+                      <Pencil size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOrderToDelete(order);
+                        setIsDeleteModalOpen(true);
+                      }}
+                      className="p-1.5 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
+                      title="Excluir comanda"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Nome do Cliente com largura total - sem break-all arbitrário */}
+                <div className="mb-3">
+                  <h3 
+                    className="font-black text-slate-900 text-xl lg:text-2xl font-display uppercase tracking-tight group-hover:text-brand-500 transition-colors leading-tight break-words line-clamp-2"
+                    title={order.customerName.replace(/^X\s*/i, '')}
+                  >
+                    {order.customerName.replace(/^X\s*/i, '')}
+                  </h3>
                 </div>
                 
                 <div className="flex flex-wrap items-center gap-2">

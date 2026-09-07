@@ -23,6 +23,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { UserRole } from '@/types';
+import PWAInstallButton from '@/components/pwa/PWAInstallButton';
 
 const Login: React.FC = () => {
   const { session, loading, loginAsLocalUser, signInWithEmail, signUpWithEmail } = useAuth();
@@ -139,6 +140,11 @@ const Login: React.FC = () => {
       {/* Decorative Glows */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand-600/5 rounded-full blur-[120px]" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-brand-600/5 rounded-full blur-[120px]" />
+
+      {/* Direct install button on top bar */}
+      <div className="absolute top-6 right-6 z-20">
+        <PWAInstallButton variant="compact" />
+      </div>
 
       <div className="glass-card p-8 md:p-10 rounded-[2.5rem] w-full max-w-md luxury-shadow relative z-10 animate-in fade-in zoom-in duration-700">
         <div className="text-center mb-6">

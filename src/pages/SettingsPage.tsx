@@ -17,8 +17,12 @@ import {
   Key,
   CheckCircle2,
   RefreshCw,
-  ExternalLink
+  ExternalLink,
+  Smartphone,
+  Monitor,
+  Download
 } from 'lucide-react';
+import PWAInstallButton from '@/components/pwa/PWAInstallButton';
 import { StorageService } from '@/services/storageService';
 import { UserProfile, UserRole } from '@/types';
 import { 
@@ -596,6 +600,59 @@ const SettingsPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Seção de Instalação no Dispositivo (PWA) */}
+      <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-brand-50 rounded-2xl text-brand-600 border border-brand-100">
+              <Download size={22} />
+            </div>
+            <div>
+              <h2 className="text-base font-black text-slate-800">Aplicativo no Dispositivo</h2>
+              <p className="text-xs text-slate-500">Instale a Pastelaria do Joel no seu celular, tablet ou computador (PWA)</p>
+            </div>
+          </div>
+          <PWAInstallButton variant="settings" />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-2">
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+            <div className="flex items-center gap-2 text-slate-800 font-bold text-xs uppercase tracking-wider">
+              <Smartphone size={16} className="text-brand-600" />
+              <span>Android (Chrome)</span>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Toque nos 3 pontos (⋮) no topo do navegador e selecione <strong>"Instalar aplicativo"</strong> ou <strong>"Adicionar à tela inicial"</strong>.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+            <div className="flex items-center gap-2 text-slate-800 font-bold text-xs uppercase tracking-wider">
+              <Smartphone size={16} className="text-brand-600" />
+              <span>iPhone / iPad (Safari)</span>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Toque no botão de <strong>Compartilhar</strong> (quadrado com seta) e escolha <strong>"Adicionar à Tela de Início"</strong>.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+            <div className="flex items-center gap-2 text-slate-800 font-bold text-xs uppercase tracking-wider">
+              <Monitor size={16} className="text-brand-600" />
+              <span>PC / Computador</span>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Clique no ícone de instalar na barra de links do Chrome/Edge ou use o botão acima para abrir como janela própria.
+            </p>
+          </div>
+        </div>
+
+        <div className="p-3.5 rounded-2xl bg-brand-50/60 border border-brand-100 flex items-center gap-3 text-xs text-brand-900">
+          <CheckCircle2 size={18} className="text-brand-600 shrink-0" />
+          <span>O aplicativo instalado funciona com maior rapidez, ocupa pouco espaço e abre diretamente em tela inteira sem barras de navegação.</span>
+        </div>
+      </div>
 
       {/* Modal de Configuração Firebase */}
       {showFirebaseModal && (

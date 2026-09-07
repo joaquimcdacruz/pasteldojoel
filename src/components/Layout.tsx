@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/AuthProvider';
 import { isFirebaseConfigured, getFirebaseHealth, FirebaseHealthState } from '@/integrations/firebase/config';
 import { AlertTriangle } from 'lucide-react';
+import PWAInstallButton from '@/components/pwa/PWAInstallButton';
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -94,10 +95,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <PWAInstallButton variant="compact" />
           <button 
             onClick={handleLogout}
             className="w-10 h-10 rounded-xl bg-black/[0.02] border border-black/[0.05] flex items-center justify-center text-slate-400 hover:text-brand-500 transition-all active:scale-95"
+            title="Sair do Sistema"
           >
             <LogOut size={18} />
           </button>
@@ -217,6 +220,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </button>
         </div>
 
+        <PWAInstallButton variant="sidebar" />
 
         <div className="p-6 border-t border-black/[0.03]">
             <div className="flex items-center gap-4 p-4 rounded-2xl bg-black/[0.02] border border-black/[0.05] hover:border-black/[0.1] transition-all duration-300 group/profile relative overflow-hidden">
