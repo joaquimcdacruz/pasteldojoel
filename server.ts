@@ -67,6 +67,12 @@ Tom: Divertido e caseiro.`;
       server: { middlewareMode: true },
       appType: "spa",
     });
+    app.use((req, res, next) => {
+      if (req.url && (req.url.startsWith("/dev-sw.js") || req.url.startsWith("/sw.js"))) {
+        res.setHeader("Content-Type", "application/javascript");
+      }
+      next();
+    });
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), "dist");
