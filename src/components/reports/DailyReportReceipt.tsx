@@ -28,7 +28,7 @@ const DailyReportReceipt: React.FC<DailyReportReceiptProps> = ({ date, totals, s
       style={{ width: '72mm', maxWidth: '72mm', padding: '0 4mm 12px 4mm' }}
     >
       <div className="text-center border-b border-black pb-1.5 mb-1.5">
-        <h1 className="text-xl font-black uppercase tracking-wider">PASTELARIA DO JOEL</h1>
+        <h1 className="text-[17px] font-black uppercase tracking-wider">PASTELARIA DO JOEL</h1>
         <h2 className="text-sm font-bold uppercase mt-0.5">RESUMO DE VENDAS / CAIXA</h2>
         <p className="text-[11px] font-bold mt-1">DATA: {date}</p>
         {sellerName && <p className="text-[11px] uppercase font-bold">RESPONSÁVEL: {sellerName}</p>}

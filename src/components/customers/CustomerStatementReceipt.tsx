@@ -42,7 +42,7 @@ const CustomerStatementReceipt: React.FC<CustomerStatementReceiptProps> = ({
     >
       {/* Header */}
       <div className="text-center mb-1">
-        <h1 className="text-xl font-black uppercase tracking-wider">PASTELARIA DO JOEL</h1>
+        <h1 className="text-[17px] font-black uppercase tracking-wider">PASTELARIA DO JOEL</h1>
         <p className="text-[10px] uppercase font-bold text-gray-800">Controle de Mensalistas / Fiado</p>
         <p className="text-[11px] font-black mt-0.5 uppercase border-b border-black pb-1">
           {type === 'PAYMENT_RECEIPT' 
