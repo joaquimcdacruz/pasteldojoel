@@ -52,7 +52,7 @@ const CustomerStatementReceipt: React.FC<CustomerStatementReceiptProps> = ({
         </p>
       </div>
 
-      <div className="border-b border-dashed border-black py-1 my-1 text-[12px] space-y-0.5">
+      <div className="border-b border-black py-1 my-1 text-[12px] space-y-0.5">
         <div className="flex justify-between">
           <span className="font-bold">CLIENTE:</span>
           <span className="font-black uppercase">{customer.name}</span>
@@ -102,7 +102,7 @@ const CustomerStatementReceipt: React.FC<CustomerStatementReceiptProps> = ({
             )}
           </div>
 
-          <div className="my-1 border-t border-b border-dotted border-black py-1">
+          <div className="my-1 border-t border-b border-black py-1">
             <div className="font-black text-[11px] uppercase mb-1 flex justify-between">
               <span>ITENS CONSUMIDOS</span>
               <span>VALOR</span>
@@ -138,14 +138,14 @@ const CustomerStatementReceipt: React.FC<CustomerStatementReceiptProps> = ({
               <span>VALOR LANÇADO EM FIADO:</span>
               <span>{fmt('fiadoAmount' in selectedFiadoOrder ? selectedFiadoOrder.fiadoAmount : selectedFiadoOrder.total)}</span>
             </div>
-            <div className="flex justify-between font-bold pt-1 border-t border-dotted border-black">
+            <div className="flex justify-between font-bold pt-1 border-t border-black">
               <span>SALDO DEVEDOR ATUAL:</span>
               <span>{fmt(customer.balance)}</span>
             </div>
           </div>
         </div>
       ) : type === 'PAYMENT_RECEIPT' && latestPayment ? (
-        <div className="my-1 py-1 border-b border-dashed border-black space-y-1">
+        <div className="my-1 py-1 border-b border-black space-y-1">
           <div className="text-center font-black text-sm uppercase">PAGAMENTO RECEBIDO</div>
           <div className="flex justify-between font-black text-base my-0.5">
             <span>VALOR PAGO:</span>
@@ -160,7 +160,7 @@ const CustomerStatementReceipt: React.FC<CustomerStatementReceiptProps> = ({
               Obs: {latestPayment.notes}
             </div>
           )}
-          <div className="flex justify-between font-black text-sm pt-1 border-t border-dotted border-black">
+          <div className="flex justify-between font-black text-sm pt-1 border-t border-black">
             <span>SALDO RESTANTE:</span>
             <span>{fmt(customer.balance)}</span>
           </div>
@@ -169,7 +169,7 @@ const CustomerStatementReceipt: React.FC<CustomerStatementReceiptProps> = ({
         <>
           {/* Recent Orders List */}
           <div className="my-1">
-            <div className="font-black text-[11px] uppercase mb-1 flex justify-between border-b border-dotted border-black pb-0.5">
+            <div className="font-black text-[11px] uppercase mb-1 flex justify-between border-b border-black pb-0.5">
               <span>HISTÓRICO DE CONSUMO</span>
               <span>VALOR</span>
             </div>
@@ -196,7 +196,7 @@ const CustomerStatementReceipt: React.FC<CustomerStatementReceiptProps> = ({
               </div>
             )}
             
-            <div className="flex justify-between font-bold text-[12px] pt-1 mt-1 border-t border-dotted border-black">
+            <div className="flex justify-between font-bold text-[12px] pt-1 mt-1 border-t border-black">
               <span>TOTAL CONSUMIDO:</span>
               <span>{fmt(totalConsumed)}</span>
             </div>
@@ -204,8 +204,8 @@ const CustomerStatementReceipt: React.FC<CustomerStatementReceiptProps> = ({
 
           {/* Payments History */}
           {payments.length > 0 && (
-            <div className="my-1 border-t border-dashed border-black pt-1.5">
-              <div className="font-black text-[11px] uppercase mb-1 flex justify-between border-b border-dotted border-black pb-0.5">
+            <div className="my-1 border-t border-black pt-1.5">
+              <div className="font-black text-[11px] uppercase mb-1 flex justify-between border-b border-black pb-0.5">
                 <span>PAGAMENTOS EFETUADOS</span>
                 <span>VALOR</span>
               </div>
@@ -219,7 +219,7 @@ const CustomerStatementReceipt: React.FC<CustomerStatementReceiptProps> = ({
                   </div>
                 ))}
               </div>
-              <div className="flex justify-between font-bold text-[12px] pt-1 mt-1 border-t border-dotted border-black">
+              <div className="flex justify-between font-bold text-[12px] pt-1 mt-1 border-t border-black">
                 <span>TOTAL PAGO:</span>
                 <span>-{fmt(totalPaid)}</span>
               </div>
@@ -243,7 +243,7 @@ const CustomerStatementReceipt: React.FC<CustomerStatementReceiptProps> = ({
       )}
 
       {/* Signature slip */}
-      <div className="mt-5 pt-3 border-t border-dashed border-black text-center text-[11px]">
+      <div className="mt-5 pt-3 border-t border-black text-center text-[11px]">
         <div className="w-48 mx-auto border-b border-black mb-1" />
         <p className="font-bold uppercase text-[10px]">Assinatura do Cliente</p>
         <p className="text-[9px] text-gray-700 mt-1">Obrigado pela preferência!</p>

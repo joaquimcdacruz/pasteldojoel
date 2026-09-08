@@ -34,7 +34,7 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
       </div>
 
       {/* Identificação do Pedido e Cliente */}
-      <div className="border-t border-b border-dashed border-black py-0.5 my-0.5 text-[14px]">
+      <div className="border-t border-b border-black py-0.5 my-0.5 text-[14px]">
         <div className="flex justify-between font-black text-[14px]">
           <span>{order.status === 'OPEN' ? 'COMANDA' : 'VENDA'} #{order.id ? order.id.slice(0, 6).toUpperCase() : '------'}</span>
           <span className="text-[13px] font-bold">{new Date(order.createdAt).toLocaleDateString('pt-BR')} {new Date(order.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
@@ -83,7 +83,7 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
                 {type === OrderType.TAKEAWAY ? '--- PARA VIAGEM ---' : '--- CONSUMO LOCAL (MESA) ---'}
               </div>
               
-              <div className="divide-y divide-dotted divide-black">
+              <div className="divide-y divide-black/20">
                 {groupItems.map((item) => {
                   const unitPrice = item.price + (item.extra || 0);
                   const itemTotal = unitPrice * item.quantity;
@@ -102,23 +102,25 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
                         </div>
                       </div>
 
-                      {fillingName && (
+                      {fillingName ? (
                         <div className="text-[13px] font-bold pl-3 italic text-black mt-0.5">
                           &gt; Recheio: {fillingName}
                         </div>
-                      )}
+                      ) : null}
 
-                      {item.addons && item.addons.length > 0 && item.addons.map(a => (
-                        <div key={a.id} className="text-[12px] font-bold pl-3 text-black">
-                          + {a.name} ({a.price > 0 ? a.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'Grátis'})
-                        </div>
-                      ))}
+                      {item.addons && item.addons.length > 0 ? (
+                        item.addons.map(a => (
+                          <div key={a.id} className="text-[12px] font-bold pl-3 text-black">
+                            + {a.name} ({a.price > 0 ? a.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'Grátis'})
+                          </div>
+                        ))
+                      ) : null}
 
-                      {item.notes && (
+                      {item.notes ? (
                         <div className="text-[13px] font-black pl-3 text-black mt-0.5">
                           * OBS: {item.notes}
                         </div>
-                      )}
+                      ) : null}
                     </div>
                   );
                 })}
@@ -135,12 +137,12 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
           <span>{order.subtotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
         </div>
         
-        {order.discount > 0 && (
+        {Boolean(order.discount && order.discount > 0) ? (
           <div className="flex justify-between text-[14px] font-bold">
             <span>DESCONTO:</span>
             <span>-{order.discount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
           </div>
-        )}
+        ) : null}
 
         <div className="flex justify-between items-center border-t-2 border-b border-black py-0.5 my-0.5">
           <span className="text-[20px] font-black">TOTAL:</span>
@@ -151,8 +153,8 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
       </div>
 
       {/* Detalhes de Pagamento para Comandas Finalizadas */}
-      {order.status === 'CLOSED' && (
-        <div className="mt-0.5 border-b border-dashed border-black pb-0.5">
+      {order.status === 'CLOSED' ? (
+        <div className="mt-0.5 border-b border-black pb-0.5">
           <div className="font-black text-[13px] uppercase mb-0.5">FORMA DE PAGAMENTO:</div>
           {order.payments && order.payments.length > 1 ? (
             <div className="space-y-0.5">
@@ -162,12 +164,12 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
                   <span>{p.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                 </div>
               ))}
-              {order.change && order.change > 0 && (
-                <div className="flex justify-between font-black text-[17px] mt-0.5 border-t border-dotted border-black pt-0.5">
+              {Boolean(order.change != null && order.change > 0) ? (
+                <div className="flex justify-between font-black text-[17px] mt-0.5 border-t border-black pt-0.5">
                   <span>TROCO:</span>
-                  <span>{order.change.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                  <span>{(order.change || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                 </div>
-              )}
+              ) : null}
             </div>
           ) : (
             <div className="space-y-0.5">
@@ -175,27 +177,27 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
                 <span>PAGO EM:</span>
                 <span>[{order.paymentMethod || 'DINHEIRO'}]</span>
               </div>
-              {order.paymentAmountReceived && order.paymentAmountReceived > 0 && order.paymentMethod === 'Dinheiro' && (
+              {Boolean(order.paymentMethod === 'Dinheiro' && order.paymentAmountReceived != null && order.paymentAmountReceived > 0) ? (
                 <>
                   <div className="flex justify-between text-[14px] font-bold">
                     <span>VALOR RECEBIDO:</span>
-                    <span>{order.paymentAmountReceived.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                    <span>{(order.paymentAmountReceived || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                   </div>
-                  {order.change && order.change > 0 && (
-                    <div className="flex justify-between font-black text-[17px] border-t border-dotted border-black pt-0.5">
+                  {Boolean(order.change != null && order.change > 0) ? (
+                    <div className="flex justify-between font-black text-[17px] border-t border-black pt-0.5">
                       <span>TROCO:</span>
-                      <span>{order.change.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                      <span>{(order.change || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                     </div>
-                  )}
+                  ) : null}
                 </>
-              )}
+              ) : null}
             </div>
           )}
         </div>
-      )}
+      ) : null}
 
-      {/* Rodapé e Mensagem Final com Espaço para Corte */}
-      <div className="text-center mt-1 pt-1 border-t border-dashed border-black">
+      {/* Rodapé e Mensagem Final */}
+      <div className="text-center mt-1 pt-0.5">
         <p className="font-black uppercase text-[13px] leading-tight">OBRIGADO PELA PREFERÊNCIA!</p>
         <p className="text-[11px] font-bold uppercase mt-0.5">VOLTE SEMPRE!</p>
       </div>

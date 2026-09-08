@@ -26,7 +26,7 @@ const DailyReportReceipt: React.FC<DailyReportReceiptProps> = ({ date, totals, s
       id="print-daily-report" 
       className="hidden print:block bg-white text-black w-full max-w-[78mm] mx-auto p-0 pb-0 font-mono text-[13px] leading-tight box-border"
     >
-      <div className="text-center border-b border-dashed border-black pb-1.5 mb-1.5">
+      <div className="text-center border-b border-black pb-1.5 mb-1.5">
         <h1 className="text-xl font-black uppercase tracking-wider">PASTELARIA DO JOEL</h1>
         <h2 className="text-sm font-bold uppercase mt-0.5">RESUMO DE VENDAS / CAIXA</h2>
         <p className="text-[11px] font-bold mt-1">DATA: {date}</p>
@@ -60,7 +60,7 @@ const DailyReportReceipt: React.FC<DailyReportReceiptProps> = ({ date, totals, s
           <span className="font-bold">{fmt(totals[PaymentMethod.FIADO] || 0)}</span>
         </div>
         
-        <div className="border-t border-dashed border-black pt-1.5 mt-1.5 font-bold space-y-0.5">
+        <div className="border-t border-black pt-1.5 mt-1.5 font-bold space-y-0.5">
           <div className="flex justify-between text-[12px]">
             <span>TOTAL BRUTO:</span>
             <span>{fmt(totals.total + totals.discount)}</span>
@@ -78,7 +78,7 @@ const DailyReportReceipt: React.FC<DailyReportReceiptProps> = ({ date, totals, s
         </div>
       </div>
 
-      <div className="text-center border-t border-dashed border-black pt-2 mt-2">
+      <div className="text-center border-t border-black pt-2 mt-2">
         <p className="text-[11px] uppercase font-black">Total de Comandas: {totals.count}</p>
         <p className="text-[9px] mt-1 text-gray-800">
           Gerado em: {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
