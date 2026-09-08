@@ -6,7 +6,12 @@ import './index.css';
 import { registerSW } from 'virtual:pwa-register';
 
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-  registerSW({ immediate: true });
+  const updateSW = registerSW({
+    immediate: true,
+    onNeedRefresh() {
+      updateSW(true);
+    },
+  });
 }
 
 // Proteção contra falhas fatais causadas por extensões do navegador ou Google Tradutor

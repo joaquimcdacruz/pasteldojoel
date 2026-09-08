@@ -3,6 +3,37 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="google" content="notranslate" />
+    <script>
+      // Auto-recuperação imediata se houver erro 404 de scripts/css desatualizados pós-deploy
+      window.addEventListener('error', function (e) {
+        var target = e.target;
+        if (target && (target.tagName === 'SCRIPT' || target.tagName === 'LINK')) {
+          var src = target.src || target.href || '';
+          if (src.indexOf('index-') !== -1 || src.indexOf('/assets/') !== -1) {
+            var key = 'pj_reload_recovery';
+            var last = parseInt(sessionStorage.getItem(key) || '0', 10);
+            var now = Date.now();
+            if (now - last > 5000) {
+              sessionStorage.setItem(key, now.toString());
+              if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function (regs) {
+                  regs.forEach(function (r) { r.unregister(); });
+                });
+              }
+              if ('caches' in window) {
+                caches.keys().then(function (names) {
+                  return Promise.all(names.map(function (n) { return caches.delete(n); }));
+                }).then(function () {
+                  window.location.reload(true);
+                });
+              } else {
+                window.location.reload(true);
+              }
+            }
+          }
+        }
+      }, true);
+    </script>
     <link rel="icon" type="image/png" href="/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#2563eb" />
