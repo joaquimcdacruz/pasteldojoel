@@ -18,7 +18,7 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
   const content = (
     <div 
       id="print-receipt" 
-      className="hidden print:block bg-white text-black w-[76mm] max-w-[76mm] mx-auto text-[13px] font-mono leading-tight p-1 pb-8 box-border"
+      className="hidden print:block bg-white text-black w-[76mm] max-w-[76mm] mx-auto text-[15px] font-mono leading-snug p-1 pb-8 box-border"
     >
       {/* Cabeçalho da Pastelaria */}
       <div className="text-center mb-1.5">
@@ -29,17 +29,17 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
             className="h-20 max-h-24 max-w-[55mm] mx-auto mb-1 object-contain grayscale" 
           />
         )}
-        <h1 className="text-xs font-black uppercase tracking-widest leading-none mt-1 text-black">PASTEL DO JOEL</h1>
-        <p className="text-[10px] uppercase font-bold tracking-widest mt-0.5 text-black">Comprovante de Pedido</p>
+        <h1 className="text-sm font-black uppercase tracking-widest leading-none mt-1 text-black">PASTEL DO JOEL</h1>
+        <p className="text-[11px] uppercase font-bold tracking-widest mt-0.5 text-black">Comprovante de Pedido</p>
       </div>
 
       {/* Identificação do Pedido e Cliente */}
-      <div className="border-t border-b border-dashed border-black py-1.5 my-1 text-[13px]">
-        <div className="flex justify-between font-black text-sm">
+      <div className="border-t border-b border-dashed border-black py-1.5 my-1 text-[14px]">
+        <div className="flex justify-between font-black text-base">
           <span>{order.status === 'OPEN' ? 'COMANDA' : 'VENDA'} #{order.id ? order.id.slice(0, 6).toUpperCase() : '------'}</span>
           <span>{new Date(order.createdAt).toLocaleDateString('pt-BR')} {new Date(order.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
         </div>
-        <div className="text-base font-black uppercase mt-1">
+        <div className="text-lg font-black uppercase mt-1">
           CLIENTE: {(order.customerName || '').replace(/^X\s*/i, '')}
         </div>
       </div>
@@ -79,7 +79,7 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
 
           return (Object.entries(groups) as [OrderType, OrderItem[]][]).map(([type, groupItems]) => (
             <div key={type} className="mb-2">
-              <div className="text-center font-black uppercase text-[12px] border-b border-black py-0.5 mb-1 bg-black text-white">
+              <div className="text-center font-black uppercase text-[14px] border-b border-black py-0.5 mb-1 bg-black text-white">
                 {type === OrderType.TAKEAWAY ? '--- PARA VIAGEM ---' : '--- CONSUMO LOCAL (MESA) ---'}
               </div>
               
@@ -92,30 +92,30 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
                     : null;
 
                   return (
-                    <div key={item.id} className="py-1 print-avoid-break">
+                    <div key={item.id} className="py-1.5 print-avoid-break">
                       <div className="flex justify-between items-start">
-                        <div className="flex-1 pr-2 font-black uppercase text-[13px] leading-tight">
-                          <span className="text-[15px] font-black">{item.quantity}x</span> {item.name}
+                        <div className="flex-1 pr-2 font-black uppercase text-[15px] leading-tight">
+                          <span className="text-[18px] font-black">{item.quantity}x</span> {item.name}
                         </div>
-                        <div className="font-black text-right whitespace-nowrap text-[13px]">
+                        <div className="font-black text-right whitespace-nowrap text-[15px]">
                           {itemTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                         </div>
                       </div>
 
                       {fillingName && (
-                        <div className="text-[12px] font-bold pl-5 italic text-black">
+                        <div className="text-[14px] font-bold pl-4 italic text-black mt-0.5">
                           &gt; Recheio: {fillingName}
                         </div>
                       )}
 
                       {item.addons && item.addons.length > 0 && item.addons.map(a => (
-                        <div key={a.id} className="text-[11px] pl-5 text-black">
+                        <div key={a.id} className="text-[13px] font-bold pl-4 text-black">
                           + {a.name} ({a.price > 0 ? a.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'Grátis'})
                         </div>
                       ))}
 
                       {item.notes && (
-                        <div className="text-[12px] font-black pl-5 text-black">
+                        <div className="text-[14px] font-black pl-4 text-black mt-0.5">
                           * OBS: {item.notes}
                         </div>
                       )}
@@ -130,21 +130,21 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
 
       {/* Totais do Pedido */}
       <div className="border-t border-black pt-1.5 mt-1 space-y-0.5">
-        <div className="flex justify-between text-[13px] font-bold">
+        <div className="flex justify-between text-[15px] font-bold">
           <span>SUBTOTAL:</span>
           <span>{order.subtotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
         </div>
         
         {order.discount > 0 && (
-          <div className="flex justify-between text-[13px] font-bold">
+          <div className="flex justify-between text-[15px] font-bold">
             <span>DESCONTO:</span>
             <span>-{order.discount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
           </div>
         )}
 
-        <div className="flex justify-between items-center border-t-2 border-b border-black py-1 my-1">
-          <span className="text-xl font-black">TOTAL:</span>
-          <span className="text-2xl font-black">
+        <div className="flex justify-between items-center border-t-2 border-b border-black py-1.5 my-1">
+          <span className="text-2xl font-black">TOTAL:</span>
+          <span className="text-3xl font-black">
             {order.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
           </span>
         </div>
@@ -153,17 +153,17 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
       {/* Detalhes de Pagamento para Comandas Finalizadas */}
       {order.status === 'CLOSED' && (
         <div className="mt-1 border-b border-dashed border-black pb-1.5">
-          <div className="font-black text-[12px] uppercase mb-0.5">FORMA DE PAGAMENTO:</div>
+          <div className="font-black text-[14px] uppercase mb-0.5">FORMA DE PAGAMENTO:</div>
           {order.payments && order.payments.length > 1 ? (
             <div className="space-y-0.5">
               {order.payments.map((p, i) => (
-                <div key={i} className="flex justify-between text-[13px] font-bold">
+                <div key={i} className="flex justify-between text-[15px] font-bold">
                   <span>{p.method.toUpperCase()}:</span>
                   <span>{p.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                 </div>
               ))}
               {order.change && order.change > 0 && (
-                <div className="flex justify-between font-black text-sm mt-1 border-t border-dotted border-black pt-0.5">
+                <div className="flex justify-between font-black text-lg mt-1 border-t border-dotted border-black pt-0.5">
                   <span>TROCO:</span>
                   <span>{order.change.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                 </div>
@@ -171,18 +171,18 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
             </div>
           ) : (
             <div className="space-y-0.5">
-              <div className="flex justify-between text-[14px] font-black uppercase">
+              <div className="flex justify-between text-[16px] font-black uppercase">
                 <span>PAGO EM:</span>
                 <span>[{order.paymentMethod || 'DINHEIRO'}]</span>
               </div>
               {order.paymentAmountReceived && order.paymentAmountReceived > 0 && order.paymentMethod === 'Dinheiro' && (
                 <>
-                  <div className="flex justify-between text-[13px] font-bold">
+                  <div className="flex justify-between text-[15px] font-bold">
                     <span>VALOR RECEBIDO:</span>
                     <span>{order.paymentAmountReceived.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                   </div>
                   {order.change && order.change > 0 && (
-                    <div className="flex justify-between font-black text-sm border-t border-dotted border-black pt-0.5">
+                    <div className="flex justify-between font-black text-lg border-t border-dotted border-black pt-0.5">
                       <span>TROCO:</span>
                       <span>{order.change.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                     </div>
@@ -196,9 +196,9 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
 
       {/* Rodapé e Mensagem Final com Espaço para Corte */}
       <div className="text-center mt-3 pt-1">
-        <p className="font-black uppercase text-[12px] leading-tight">OBRIGADO PELA PREFERÊNCIA!</p>
-        <p className="text-[11px] font-bold uppercase mt-0.5">VOLTE SEMPRE!</p>
-        <p className="text-[9px] text-gray-800 mt-2">Pastelaria do Joel - Sistema de Gestão</p>
+        <p className="font-black uppercase text-[14px] leading-tight">OBRIGADO PELA PREFERÊNCIA!</p>
+        <p className="text-[12px] font-bold uppercase mt-0.5">VOLTE SEMPRE!</p>
+        <p className="text-[10px] text-gray-800 mt-2">Pastelaria do Joel - Sistema de Gestão</p>
       </div>
 
     </div>
