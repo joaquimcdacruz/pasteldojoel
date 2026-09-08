@@ -126,7 +126,7 @@ body {
 
 @media print {
   @page {
-    size: auto;
+    size: 80mm auto;
     margin: 0 !important;
   }
 
@@ -134,9 +134,9 @@ body {
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
-    max-width: 76mm !important;
+    max-width: 80mm !important;
     height: auto !important;
-    overflow: visible !important;
+    min-height: 0 !important;
     background: #ffffff !important;
     color: #000000 !important;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
@@ -153,8 +153,8 @@ body {
   #print-portal {
     display: block !important;
     width: 100% !important;
-    max-width: 76mm !important;
-    margin: 0 auto !important;
+    max-width: 80mm !important;
+    margin: 0 !important;
     padding: 0 !important;
   }
 
@@ -163,9 +163,9 @@ body {
   #print-customer-receipt {
     display: block !important;
     width: 100% !important;
-    max-width: 72mm !important;
+    max-width: 78mm !important;
     margin: 0 auto !important;
-    padding: 0 1mm 1mm 1mm !important;
+    padding: 0 1mm 0 1mm !important;
     box-sizing: border-box !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
