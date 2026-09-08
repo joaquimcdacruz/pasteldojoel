@@ -13,15 +13,23 @@ interface ReceiptProps {
 const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
   const portalRoot = typeof document !== 'undefined' ? document.getElementById('print-portal') : null;
 
+  const receiptLogo = logo || '/logo.png';
+
   const content = (
     <div 
       id="print-receipt" 
       className="hidden print:block bg-white text-black w-[76mm] max-w-[76mm] mx-auto text-[13px] font-mono leading-tight p-1 pb-8 box-border"
     >
       {/* Cabeçalho da Pastelaria */}
-      <div className="text-center mb-1">
-        {logo && <img src={logo} alt="Logo" className="h-9 mx-auto mb-1 object-contain grayscale" />}
-        <h1 className="text-2xl font-black uppercase tracking-wider leading-none">PASTELARIA DO JOEL</h1>
+      <div className="text-center mb-1.5">
+        {receiptLogo && (
+          <img 
+            src={receiptLogo} 
+            alt="Logo" 
+            className="h-20 max-h-24 max-w-[55mm] mx-auto mb-1 object-contain grayscale" 
+          />
+        )}
+        <h1 className="text-xs font-black uppercase tracking-widest leading-none mt-1 text-black">PASTEL DO JOEL</h1>
         <p className="text-[10px] uppercase font-bold tracking-widest mt-0.5 text-black">Comprovante de Pedido</p>
       </div>
 
