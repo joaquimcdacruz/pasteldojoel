@@ -138,9 +138,8 @@ body {
   html, body {
     margin: 0 !important;
     padding: 0 !important;
-    width: 78mm !important;
-    min-width: 78mm !important;
-    max-width: 78mm !important;
+    width: 72mm !important;
+    max-width: 72mm !important;
     height: auto !important;
     min-height: 0 !important;
     overflow: visible !important;
@@ -162,9 +161,8 @@ body {
   /* Portal de impressão térmico 80mm */
   #print-portal {
     display: block !important;
-    width: 78mm !important;
-    min-width: 78mm !important;
-    max-width: 78mm !important;
+    width: 72mm !important;
+    max-width: 72mm !important;
     margin: 0 !important;
     padding: 0 !important;
   }
@@ -173,11 +171,10 @@ body {
   #print-daily-report,
   #print-customer-receipt {
     display: block !important;
-    width: 78mm !important;
-    min-width: 78mm !important;
-    max-width: 78mm !important;
+    width: 72mm !important;
+    max-width: 72mm !important;
     margin: 0 !important;
-    padding: 0 1mm 4mm 1mm !important;
+    padding: 0 4mm 5mm 4mm !important;
     box-sizing: border-box !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
