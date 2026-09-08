@@ -840,51 +840,11 @@ export const StorageService = {
     }
     const targetOrder = orders.find(o => o && o.id === id);
 
-    // 1. Se o pedido decrementou estoque e não estava cancelado, restaura estoque
-    if (targetOrder && targetOrder.status !== OrderStatus.CANCELLED && targetOrder.stockDecremented) {
-      try {
-        await StorageService.restoreOrderStock(targetOrder);
-      } catch (err) {
-        console.warn("Erro ao restaurar estoque ao excluir pedido:", err);
-      }
-    }
-
-    // 2. Se o pedido tinha fiado contabilizado no cliente mensalista, estorna o saldo
-    if (targetOrder && targetOrder.fiadoAccounted) {
-      try {
-        let fiadoAmount = 0;
-        if (targetOrder.payments && targetOrder.payments.length > 0) {
-          fiadoAmount = targetOrder.payments
-            .filter(p => p.method === PaymentMethod.FIADO)
-            .reduce((sum, p) => sum + p.amount, 0);
-        } else if (targetOrder.paymentMethod === PaymentMethod.FIADO) {
-          fiadoAmount = targetOrder.total || 0;
-        }
-
-        if (fiadoAmount > 0) {
-          const customers = await StorageService.getCustomers();
-          const customer = customers.find(c => 
-            (targetOrder.customerId && c.id === targetOrder.customerId) ||
-            c.name.toLowerCase().trim() === (targetOrder.customerName || '').toLowerCase().trim()
-          );
-          if (customer) {
-            customer.balance = Math.max(0, (customer.balance || 0) - fiadoAmount);
-            if (customer.fiadoOrders) {
-              customer.fiadoOrders = customer.fiadoOrders.filter(fo => fo.orderId !== id);
-            }
-            await StorageService.saveCustomer(customer);
-          }
-        }
-      } catch (err) {
-        console.warn("Erro ao estornar fiado do cliente mensalista ao excluir:", err);
-      }
-    }
-
-    // 3. Remove do LocalStorage
+    // 1. Remove do LocalStorage imediatamente (UI otimista instantânea)
     const filtered = orders.filter(o => o && o.id !== id);
     localStorage.setItem(LS_KEYS.ORDERS, JSON.stringify(filtered));
 
-    // 4. Grava na lista de IDs excluídos (tombstone) para evitar ressurreição em snapshots do Firestore
+    // 2. Grava na lista de IDs excluídos (tombstone) imediatamente para evitar ressurreição em snapshots do Firestore
     try {
       const deletedIds: string[] = JSON.parse(localStorage.getItem('pastelaria_deleted_orders') || '[]');
       if (!deletedIds.includes(id)) {
@@ -894,20 +854,69 @@ export const StorageService = {
       }
     } catch {}
 
-    // 5. Exclui do Firestore se configurado
-    if (isFirebaseConfigured() && db && navigator.onLine) {
-      try {
-        await deleteDoc(doc(db, 'orders', id));
-      } catch (e) {
-        console.warn("Falha ao deletar pedido no Firebase:", e);
-      }
-    }
-
-    // 6. Notifica todas as páginas e abas abertas
+    // 3. Notifica todas as páginas e abas abertas imediatamente
     try {
       window.dispatchEvent(new CustomEvent('orders-changed'));
       window.dispatchEvent(new CustomEvent('order-deleted', { detail: { id } }));
     } catch {}
+
+    // 4. Executa tarefas secundárias (estorno fiado, restauração estoque e Firestore) de forma assíncrona (não-bloqueante)
+    (async () => {
+      // 4.1. Restaura estoque se aplicável
+      if (targetOrder && targetOrder.status !== OrderStatus.CANCELLED && targetOrder.stockDecremented) {
+        try {
+          await StorageService.restoreOrderStock(targetOrder);
+        } catch (err) {
+          console.warn("Erro ao restaurar estoque ao excluir pedido:", err);
+        }
+      }
+
+      // 4.2. Se o pedido tinha fiado contabilizado no cliente mensalista, estorna o saldo
+      if (targetOrder && targetOrder.fiadoAccounted) {
+        try {
+          let fiadoAmount = 0;
+          if (targetOrder.payments && targetOrder.payments.length > 0) {
+            fiadoAmount = targetOrder.payments
+              .filter(p => p.method === PaymentMethod.FIADO)
+              .reduce((sum, p) => sum + p.amount, 0);
+          } else if (targetOrder.paymentMethod === PaymentMethod.FIADO) {
+            fiadoAmount = targetOrder.total || 0;
+          }
+
+          if (fiadoAmount > 0) {
+            const customers = await StorageService.getCustomers();
+            const customer = customers.find(c => 
+              (targetOrder.customerId && c.id === targetOrder.customerId) ||
+              c.name.toLowerCase().trim() === (targetOrder.customerName || '').toLowerCase().trim()
+            );
+            if (customer) {
+              customer.balance = Math.max(0, (customer.balance || 0) - fiadoAmount);
+              if (customer.fiadoOrders) {
+                customer.fiadoOrders = customer.fiadoOrders.filter(fo => fo.orderId !== id);
+              }
+              await StorageService.saveCustomer(customer);
+            }
+          }
+        } catch (err) {
+          console.warn("Erro ao estornar fiado do cliente mensalista ao excluir:", err);
+        }
+      }
+
+      // 4.3. Exclui do Firestore com proteção de timeout
+      if (isFirebaseConfigured() && db && navigator.onLine) {
+        try {
+          const deletePromise = deleteDoc(doc(db, 'orders', id));
+          await Promise.race([
+            deletePromise,
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase delete timeout')), 5000))
+          ]);
+        } catch (e) {
+          console.warn("Aviso ao deletar pedido no Firebase (será sincronizado offline):", e);
+        }
+      }
+    })().catch(err => {
+      console.warn("Erro em background na exclusão da comanda:", err);
+    });
   },
 
   // ─── Menu & Products ──────────────────────────────────────────────────

@@ -374,16 +374,14 @@ const OrderDetailsPage: React.FC = () => {
   };
 
   const handleDeleteOrder = async () => {
-    if (!order || isDeleting) return;
+    if (!order) return;
+    const targetId = order.id;
+    setIsDeleteModalOpen(false);
+    navigate('/', { replace: true });
     try {
-      setIsDeleting(true);
-      await StorageService.deleteOrder(order.id);
-      setIsDeleteModalOpen(false);
-      navigate('/', { replace: true });
+      await StorageService.deleteOrder(targetId);
     } catch (e) {
       console.error("Erro ao excluir comanda:", e);
-      setIsDeleting(false);
-      alert("Erro ao excluir comanda. Tente novamente.");
     }
   };
 
@@ -572,11 +570,11 @@ const OrderDetailsPage: React.FC = () => {
       <ConfirmationModal 
         isOpen={isDeleteModalOpen}
         title="Excluir Comanda"
-        message="Tem certeza que deseja excluir esta comanda permanentemente? Esta ação não pode ser desfeita."
+        message={`Tem certeza que deseja excluir esta comanda ${order.customerName ? `"${order.customerName.replace(/^X\s*/i, '').trim()}"` : ''} permanentemente? Esta ação não pode ser desfeita.`}
         isDestructive={true}
-        isLoading={isDeleting}
+        isLoading={false}
         onConfirm={handleDeleteOrder}
-        onCancel={() => !isDeleting && setIsDeleteModalOpen(false)}
+        onCancel={() => setIsDeleteModalOpen(false)}
       />
 
       <RenameOrderModal

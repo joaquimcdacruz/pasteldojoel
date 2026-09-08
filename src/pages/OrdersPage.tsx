@@ -117,18 +117,18 @@ const OrdersPage: React.FC = () => {
   };
 
   const handleDeleteOrder = async () => {
-    if (!orderToDelete || isDeleting) return;
+    if (!orderToDelete) return;
+    const targetId = orderToDelete.id;
+    
+    // Atualização otimista imediata: fecha modal e remove da tela sem travar
+    setIsDeleteModalOpen(false);
+    setOrders(prev => prev.filter(o => o.id !== targetId));
+    setOrderToDelete(null);
+
     try {
-      setIsDeleting(true);
-      await StorageService.deleteOrder(orderToDelete.id);
-      setOrders(prev => prev.filter(o => o.id !== orderToDelete.id));
-      setIsDeleteModalOpen(false);
-      setOrderToDelete(null);
+      await StorageService.deleteOrder(targetId);
     } catch (err) {
       console.error("Erro ao excluir comanda:", err);
-      alert("Erro ao excluir comanda. Tente novamente.");
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -429,11 +429,15 @@ const OrdersPage: React.FC = () => {
       <ConfirmationModal 
         isOpen={isDeleteModalOpen}
         title="Excluir Comanda"
-        message={`Tem certeza que deseja excluir permanentemente a comanda ${orderToDelete?.customerName ? `"${orderToDelete.customerName.replace(/^X\s*/i, '')}"` : ''}? Esta ação não pode ser desfeita.`}
+        message={`Tem certeza que deseja excluir permanentemente a comanda ${
+          orderToDelete?.customerName && orderToDelete.customerName.replace(/^X\s*/i, '').trim()
+            ? `"${orderToDelete.customerName.replace(/^X\s*/i, '').trim()}"`
+            : orderToDelete?.id ? `#${orderToDelete.id.slice(0, 6)}` : ''
+        }? Esta ação não pode ser desfeita.`}
         isDestructive={true}
-        isLoading={isDeleting}
+        isLoading={false}
         onConfirm={handleDeleteOrder}
-        onCancel={() => !isDeleting && setIsDeleteModalOpen(false)}
+        onCancel={() => setIsDeleteModalOpen(false)}
       />
 
       <RenameOrderModal
