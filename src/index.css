@@ -126,14 +126,17 @@ body {
 
 @media print {
   @page {
-    size: 80mm auto;
-    margin: 0mm;
+    size: auto;
+    margin: 0 !important;
   }
 
   html, body {
     margin: 0 !important;
     padding: 0 !important;
-    width: 80mm !important;
+    width: 100% !important;
+    max-width: 76mm !important;
+    height: auto !important;
+    overflow: visible !important;
     background: #ffffff !important;
     color: #000000 !important;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
@@ -146,11 +149,11 @@ body {
     display: none !important;
   }
 
-  /* Portal de impressão térmico 80mm */
+  /* Portal de impressão térmico 80mm / 58mm */
   #print-portal {
     display: block !important;
-    width: 80mm !important;
-    max-width: 80mm !important;
+    width: 100% !important;
+    max-width: 76mm !important;
     margin: 0 auto !important;
     padding: 0 !important;
   }
@@ -159,10 +162,10 @@ body {
   #print-daily-report,
   #print-customer-receipt {
     display: block !important;
-    width: 76mm !important;
-    max-width: 76mm !important;
+    width: 100% !important;
+    max-width: 72mm !important;
     margin: 0 auto !important;
-    padding: 1mm 2mm 8mm 2mm !important;
+    padding: 0 1mm 1mm 1mm !important;
     box-sizing: border-box !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;

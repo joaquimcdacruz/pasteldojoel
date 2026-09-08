@@ -24,7 +24,7 @@ const DailyReportReceipt: React.FC<DailyReportReceiptProps> = ({ date, totals, s
   const content = (
     <div 
       id="print-daily-report" 
-      className="hidden print:block bg-white text-black w-[76mm] max-w-[76mm] mx-auto p-1 pb-8 font-mono text-[12px] leading-tight box-border"
+      className="hidden print:block bg-white text-black w-[72mm] max-w-[72mm] mx-auto p-0 pb-1 font-mono text-[12px] leading-tight box-border"
     >
       <div className="text-center border-b border-dashed border-black pb-1.5 mb-1.5">
         <h1 className="text-xl font-black uppercase tracking-wider">PASTELARIA DO JOEL</h1>
