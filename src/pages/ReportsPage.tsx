@@ -6,12 +6,14 @@ import {
   PieChart, Pie, Cell, Legend, Area, AreaChart
 } from 'recharts';
 import { StorageService } from '@/services/storageService';
-import { Order, OrderStatus, OrderType } from '@/types';
+import { Order, OrderStatus, OrderType, MenuItem } from '@/types';
+import { DEFAULT_INITIAL_PRODUCTS } from '@/data/initialData';
 import {
   TrendingUp, DollarSign, RefreshCw, Package,
   Wallet, Calendar, ShoppingBag, ArrowUpRight,
   UtensilsCrossed, UserCheck, ChevronLeft, ChevronRight,
-  PercentIcon, ListOrdered, Printer, Loader2, Lock
+  PercentIcon, ListOrdered, Printer, Loader2, Lock,
+  Search, X
 } from 'lucide-react';
 import DailyReportReceipt from '@/components/reports/DailyReportReceipt';
 import { PaymentMethod } from '@/types';
@@ -36,11 +38,26 @@ const ReportsPage: React.FC = () => {
     } catch {}
     return [];
   });
+  const [products, setProducts] = useState<MenuItem[]>(() => {
+    try {
+      const stored = localStorage.getItem('pastelaria_menu');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return DEFAULT_INITIAL_PRODUCTS;
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [dateFilter, setDateFilter] = useState<'today' | 'week' | 'month' | 'all' | 'custom'>('today');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [sellerFilter, setSellerFilter] = useState<string>('all');
   const [page, setPage] = useState(0);
+
+  // Ranking de produtos: busca e filtros
+  const [productSearch, setProductSearch] = useState('');
+  const [productStatusFilter, setProductStatusFilter] = useState<'all' | 'with_sales' | 'zero_sales'>('all');
+  const [productCategoryFilter, setProductCategoryFilter] = useState<string>('all');
 
   // Lock State: se já for admin ou tiver desbloqueado na sessão, entra diretamente
   const [isUnlocked, setIsUnlocked] = useState(() => {
@@ -56,8 +73,14 @@ const ReportsPage: React.FC = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const data = await StorageService.getOrders();
-      setOrders(data);
+      const [ordersData, productsData] = await Promise.all([
+        StorageService.getOrders(),
+        StorageService.getProducts()
+      ]);
+      setOrders(ordersData);
+      if (productsData && productsData.length > 0) {
+        setProducts(productsData);
+      }
     } catch (error) {
       console.error("Erro ao carregar dados do relatório:", error);
     } finally {
@@ -119,20 +142,87 @@ const ReportsPage: React.FC = () => {
     return { totalSales, totalOrders, averageTicket, totalItemsSold, totalDiscount };
   }, [closedOrders]);
 
-  const salesByItem = useMemo(() => {
-    const map: Record<string, { qty: number; revenue: number }> = {};
+  const productCategories = useMemo(() => {
+    const set = new Set<string>();
+    products.forEach(p => {
+      if (p.category) set.add(p.category);
+    });
+    return Array.from(set);
+  }, [products]);
+
+  const allProductSales = useMemo(() => {
+    const map: Record<string, { qty: number; revenue: number; category: string; inMenu: boolean }> = {};
+
+    // 1. Inicia com todos os produtos cadastrados no cardápio (para mostrar inclusive os com 0 vendas)
+    products.forEach(product => {
+      map[product.name] = {
+        qty: 0,
+        revenue: 0,
+        category: product.category || 'Geral',
+        inMenu: true
+      };
+    });
+
+    // 2. Contabiliza vendas das comandas fechadas no período selecionado
     closedOrders.forEach(order => {
       (order.items || []).forEach(item => {
-        if (!map[item.name]) map[item.name] = { qty: 0, revenue: 0 };
-        map[item.name].qty += item.quantity;
-        map[item.name].revenue += ((item.price + (item.extra || 0)) * item.quantity);
+        if (!map[item.name]) {
+          map[item.name] = { 
+            qty: 0, 
+            revenue: 0, 
+            category: item.category || 'Outros', 
+            inMenu: false 
+          };
+        }
+        map[item.name].qty += (item.quantity || 0);
+        map[item.name].revenue += ((item.price + (item.extra || 0)) * (item.quantity || 0));
       });
     });
-    return Object.entries(map)
-      .map(([name, { qty, revenue }]) => ({ name, value: qty, revenue }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 8);
-  }, [closedOrders]);
+
+    const list = Object.entries(map).map(([name, data]) => ({
+      name,
+      value: data.qty,
+      revenue: data.revenue,
+      category: data.category,
+      inMenu: data.inMenu
+    }));
+
+    // Ordenação: primeiro os mais vendidos por quantidade, depois por faturamento, depois ordem alfabética
+    list.sort((a, b) => {
+      if (b.value !== a.value) return b.value - a.value;
+      if (b.revenue !== a.revenue) return b.revenue - a.revenue;
+      return a.name.localeCompare(b.name);
+    });
+
+    return list;
+  }, [closedOrders, products]);
+
+  const filteredProductSales = useMemo(() => {
+    return allProductSales.filter(item => {
+      if (productStatusFilter === 'with_sales' && item.value === 0) return false;
+      if (productStatusFilter === 'zero_sales' && item.value > 0) return false;
+
+      if (productCategoryFilter !== 'all' && item.category !== productCategoryFilter) return false;
+
+      if (productSearch.trim()) {
+        const q = productSearch.toLowerCase();
+        const matchesName = item.name.toLowerCase().includes(q);
+        const matchesCat = (item.category || '').toLowerCase().includes(q);
+        if (!matchesName && !matchesCat) return false;
+      }
+
+      return true;
+    });
+  }, [allProductSales, productStatusFilter, productCategoryFilter, productSearch]);
+
+  const productStats = useMemo(() => {
+    const total = allProductSales.length;
+    const withSales = allProductSales.filter(i => i.value > 0).length;
+    const zeroSales = total - withSales;
+    const totalRevenue = allProductSales.reduce((sum, i) => sum + i.revenue, 0);
+    const totalQty = allProductSales.reduce((sum, i) => sum + i.value, 0);
+    return { total, withSales, zeroSales, totalRevenue, totalQty };
+  }, [allProductSales]);
 
   const salesByPayment = useMemo(() => {
     const map: Record<string, number> = {};
@@ -331,31 +421,169 @@ const ReportsPage: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <ChartContainer title="Ranking de Produtos" icon={<ListOrdered size={16} />}>
-            <div className="space-y-3 pt-2">
-              {salesByItem.length === 0 ? (
-                <p className="text-center text-slate-500 text-[10px] uppercase tracking-widest py-10">Sem dados no período</p>
-              ) : salesByItem.map((item, i) => {
-                const max = salesByItem[0]?.value || 1;
-                const pct = Math.round((item.value / max) * 100);
-                return (
-                  <div key={item.name} className="flex items-center gap-4">
-                    <span className="text-[10px] font-black text-slate-400 w-5 text-right">{i + 1}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-[11px] font-black text-slate-900 uppercase tracking-tight truncate">{item.name}</span>
-                        <div className="flex items-center gap-3 ml-2 shrink-0">
-                          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{item.value} un.</span>
-                          <span className="text-[10px] font-black text-brand-600">{item.revenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+          <ChartContainer 
+            title="Ranking de Produtos" 
+            icon={<ListOrdered size={16} />}
+            action={
+              <div className="flex items-center gap-2">
+                <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-brand-600/10 text-brand-600 border border-brand-600/20">
+                  {productStats.total} {productStats.total === 1 ? 'item no cardápio' : 'itens no cardápio'}
+                </span>
+              </div>
+            }
+          >
+            {/* Controles de Busca e Filtros */}
+            <div className="space-y-3 mb-4">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <div className="relative flex-1">
+                  <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    placeholder="Buscar produto ou categoria..."
+                    className="w-full bg-black/[0.02] border border-black/[0.08] pl-9 pr-8 py-2 rounded-xl text-[11px] font-bold text-slate-900 placeholder:text-slate-400 outline-none focus:border-brand-600 focus:bg-white transition-all"
+                  />
+                  {productSearch && (
+                    <button 
+                      onClick={() => setProductSearch('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                      title="Limpar busca"
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+
+                {productCategories.length > 1 && (
+                  <select
+                    value={productCategoryFilter}
+                    onChange={(e) => setProductCategoryFilter(e.target.value)}
+                    className="bg-black/[0.02] border border-black/[0.08] text-slate-800 text-[10px] font-black uppercase tracking-wider px-3 py-2 rounded-xl outline-none focus:border-brand-600 transition-all cursor-pointer"
+                  >
+                    <option value="all">Todas as Categorias</option>
+                    {productCategories.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              {/* Filtros rápidos por status */}
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    onClick={() => setProductStatusFilter('all')}
+                    className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${
+                      productStatusFilter === 'all'
+                        ? 'bg-slate-900 text-white shadow-sm'
+                        : 'bg-black/[0.03] text-slate-600 hover:bg-black/[0.06]'
+                    }`}
+                  >
+                    Todos ({productStats.total})
+                  </button>
+                  <button
+                    onClick={() => setProductStatusFilter('with_sales')}
+                    className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${
+                      productStatusFilter === 'with_sales'
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100/70'
+                    }`}
+                  >
+                    Vendidos ({productStats.withSales})
+                  </button>
+                  <button
+                    onClick={() => setProductStatusFilter('zero_sales')}
+                    className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${
+                      productStatusFilter === 'zero_sales'
+                        ? 'bg-amber-600 text-white shadow-sm'
+                        : 'bg-amber-50 text-amber-700 hover:bg-amber-100/70'
+                    }`}
+                  >
+                    Sem Vendas ({productStats.zeroSales})
+                  </button>
+                </div>
+
+                <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">
+                  Total vendido: <strong className="text-slate-800 font-black">{productStats.totalQty} un.</strong> ({productStats.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})
+                </div>
+              </div>
+            </div>
+
+            {/* Lista com scroll exibindo TODOS os produtos */}
+            <div className="max-h-[460px] overflow-y-auto pr-2 space-y-2 scrollbar-thin">
+              {filteredProductSales.length === 0 ? (
+                <div className="text-center py-12 px-4 bg-slate-50/60 rounded-2xl border border-dashed border-slate-200">
+                  <p className="text-slate-500 text-[11px] font-bold uppercase tracking-wider">Nenhum produto encontrado</p>
+                  <p className="text-slate-400 text-[9px] mt-1">Tente ajustar a busca ou os filtros acima</p>
+                </div>
+              ) : (
+                filteredProductSales.map((item, i) => {
+                  const max = allProductSales[0]?.value || 1;
+                  const pct = max > 0 && item.value > 0 ? Math.round((item.value / max) * 100) : 0;
+                  const hasSales = item.value > 0;
+
+                  return (
+                    <div 
+                      key={item.name} 
+                      className={`p-3 rounded-2xl border transition-all ${
+                        hasSales 
+                          ? 'bg-white border-black/[0.06] hover:border-brand-500/40 hover:shadow-sm' 
+                          : 'bg-slate-50/50 border-slate-200/50 opacity-75 hover:opacity-100'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-7 h-7 rounded-xl flex items-center justify-center text-[10px] font-black shrink-0 ${
+                          hasSales && i === 0 ? 'bg-amber-100 text-amber-900 border border-amber-300' :
+                          hasSales && i === 1 ? 'bg-slate-200 text-slate-800 border border-slate-300' :
+                          hasSales && i === 2 ? 'bg-amber-50 text-amber-800 border border-amber-200' :
+                          hasSales ? 'bg-brand-50 text-brand-700 border border-brand-100' :
+                          'bg-slate-100 text-slate-400'
+                        }`}>
+                          {hasSales ? `#${i + 1}` : '-'}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-center mb-1">
+                            <div className="min-w-0 pr-2">
+                              <span className="text-[12px] font-black text-slate-900 uppercase tracking-tight truncate block">
+                                {item.name}
+                              </span>
+                              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+                                {item.category}
+                              </span>
+                            </div>
+                            
+                            <div className="flex items-center gap-2.5 shrink-0 text-right">
+                              <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
+                                hasSales 
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                                  : 'bg-slate-100 text-slate-400'
+                              }`}>
+                                {item.value} un.
+                              </span>
+                              <span className={`text-[11px] font-black min-w-[70px] text-right ${
+                                hasSales ? 'text-slate-900' : 'text-slate-400'
+                              }`}>
+                                {item.revenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="h-1.5 bg-black/[0.04] rounded-full overflow-hidden mt-1.5">
+                            <div 
+                              className={`h-full rounded-full transition-all duration-700 ${
+                                hasSales ? 'bg-brand-600' : 'bg-transparent'
+                              }`} 
+                              style={{ width: `${pct}%` }} 
+                            />
+                          </div>
                         </div>
                       </div>
-                      <div className="h-1.5 bg-black/[0.04] rounded-full overflow-hidden">
-                        <div className="h-full bg-brand-600 rounded-full transition-all duration-700" style={{ width: `${pct}%` }} />
-                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </ChartContainer>
         </div>
@@ -531,11 +759,14 @@ const SummaryCard = ({ icon, label, value, sublabel, color }: any) => {
   );
 };
  
-const ChartContainer = ({ title, icon, children }: any) => (
+const ChartContainer = ({ title, icon, action, children }: any) => (
   <div className="glass-card p-7 rounded-[3rem] border border-black/[0.05] flex flex-col h-full shadow-sm bg-white">
-    <div className="flex items-center gap-3 mb-8">
-      <div className="p-2.5 bg-slate-50 rounded-xl text-brand-600 border border-black/5">{icon}</div>
-      <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{title}</h3>
+    <div className="flex items-center justify-between gap-3 mb-6">
+      <div className="flex items-center gap-3">
+        <div className="p-2.5 bg-slate-50 rounded-xl text-brand-600 border border-black/5">{icon}</div>
+        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{title}</h3>
+      </div>
+      {action && <div className="shrink-0">{action}</div>}
     </div>
     <div className="flex-1">{children}</div>
   </div>
