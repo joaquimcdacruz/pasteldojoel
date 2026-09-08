@@ -34,11 +34,6 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
         <div className="text-base font-black uppercase mt-1">
           CLIENTE: {(order.customerName || '').replace(/^X\s*/i, '')}
         </div>
-        {order.sellerName && (
-          <div className="text-[11px] font-bold text-black uppercase">
-            ATENDENTE: {order.sellerName}
-          </div>
-        )}
       </div>
 
       {/* Listagem de Itens formatada para Bobina Térmica 80mm */}
