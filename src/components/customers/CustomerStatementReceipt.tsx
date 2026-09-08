@@ -37,7 +37,8 @@ const CustomerStatementReceipt: React.FC<CustomerStatementReceiptProps> = ({
   const content = (
     <div 
       id="print-customer-receipt" 
-      className="hidden print:block bg-white text-black w-full text-[13px] font-sans leading-tight p-0 pb-2 box-border"
+      className="hidden print:block bg-white text-black text-[13px] font-sans leading-tight p-0 pb-3 box-border"
+      style={{ width: '78mm', minWidth: '78mm', maxWidth: '78mm' }}
     >
       {/* Header */}
       <div className="text-center mb-1">
