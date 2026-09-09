@@ -3,6 +3,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { Order, OrderItem, DEFAULT_CATEGORIES, OrderType, Filling } from '@/types';
+import { StorageService } from '@/services/storageService';
 
 interface ReceiptProps {
   order: Order;
@@ -12,35 +13,47 @@ interface ReceiptProps {
 
 const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
   const portalRoot = typeof document !== 'undefined' ? document.getElementById('print-portal') : null;
+  const printSettings = StorageService.getPrintSettings();
 
   const receiptLogo = logo || '/logo.png';
+  const showLogo = printSettings.printLogo && Boolean(receiptLogo);
+  const printableWidth = printSettings.paperWidth === '58mm' ? '48mm' : '72mm';
 
   const content = (
     <div 
       id="print-receipt" 
       className="hidden print:block bg-white text-black text-[13px] font-sans leading-tight box-border"
-      style={{ width: '72mm', maxWidth: '72mm', padding: '0 4mm 12px 4mm' }}
+      style={{ width: printableWidth, maxWidth: printableWidth, padding: '0 3mm 8mm 3mm' }}
     >
       {/* Cabeçalho da Pastelaria */}
-      <div className="text-center mb-1">
-        {receiptLogo ? (
+      {showLogo ? (
+        <div className="text-center mb-1">
           <img 
             src={receiptLogo} 
             alt="Logo" 
-            className="h-11 max-h-12 max-w-[45mm] mx-auto mb-1 object-contain grayscale" 
+            width="130"
+            height="44"
+            loading="eager"
+            decoding="sync"
+            className="h-11 max-h-12 max-w-[42mm] mx-auto mb-1 object-contain grayscale" 
           />
-        ) : null}
-        <h1 className="text-[17px] font-black uppercase tracking-wider leading-none mt-0.5 text-black">PASTEL DO JOEL</h1>
-        <p className="text-[11px] uppercase font-bold tracking-wider mt-0.5 text-black">Comprovante de Pedido</p>
-      </div>
+          <h1 className="text-[17px] font-black uppercase tracking-wider leading-none mt-0.5 text-black">PASTEL DO JOEL</h1>
+          <p className="text-[11px] uppercase font-bold tracking-wider mt-0.5 text-black">Comprovante de Pedido</p>
+        </div>
+      ) : (
+        <div className="text-center mb-1.5 pb-1 border-b border-black">
+          <h1 className="text-[18px] font-black uppercase tracking-wider leading-none mt-0.5 text-black">PASTEL DO JOEL</h1>
+          <p className="text-[10px] uppercase font-bold tracking-widest mt-0.5 text-black">COMPROVANTE DE PEDIDO</p>
+        </div>
+      )}
 
       {/* Identificação do Pedido e Cliente */}
-      <div className="border-t border-b border-black py-1 my-1 text-[13px]">
+      <div className="border-t border-b border-black py-1 my-1 text-[13px] print-avoid-break">
         <div className="flex justify-between font-black text-[13px]">
           <span>{order.status === 'OPEN' ? 'COMANDA' : 'VENDA'} #{order.id ? order.id.slice(0, 6).toUpperCase() : '------'}</span>
           <span className="text-[12px] font-bold">{new Date(order.createdAt).toLocaleDateString('pt-BR')} {new Date(order.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
         </div>
-        <div className="text-[14px] font-black uppercase mt-0.5">
+        <div className="text-[14px] font-black uppercase mt-0.5 break-words">
           CLIENTE: {(order.customerName || '').replace(/^X\s*/i, '')}
         </div>
       </div>
@@ -198,7 +211,7 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
       ) : null}
 
       {/* Rodapé e Mensagem Final */}
-      <div className="text-center mt-1 pt-1 pb-3">
+      <div className="text-center mt-2 pt-1 pb-4 print-avoid-break">
         <p className="font-black uppercase text-[12px] leading-tight">OBRIGADO PELA PREFERÊNCIA!</p>
         <p className="text-[11px] font-bold uppercase mt-0.5">VOLTE SEMPRE!</p>
       </div>

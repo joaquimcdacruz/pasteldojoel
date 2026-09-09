@@ -18,7 +18,7 @@ import {
 import { 
   Order, MenuItem, CategoryItem, Addon, Filling, MenuItemFilling, CashRegisterSession, 
   DEFAULT_CATEGORIES, OrderStatus, PaymentMethod, CashTransaction, CashTransactionType, OrderType, CashBreakdown,
-  UserProfile, MonthlyCustomer, CustomerFiadoOrder
+  UserProfile, MonthlyCustomer, CustomerFiadoOrder, PrintSettings
 } from '@/types';
 import { 
   DEFAULT_INITIAL_PRODUCTS, 
@@ -37,6 +37,7 @@ const LS_KEYS = {
   MENU_FILLINGS: 'pastelaria_menu_fillings',
   CASH_SESSIONS: 'pastelaria_cash_sessions',
   LOGO: 'pastelaria_logo',
+  PRINT_SETTINGS: 'pastelaria_print_settings',
   REPORT_PASSWORD: 'pastelaria_report_password',
   PROFILE: 'pastelaria_user_profile',
   CUSTOMERS: 'pastelaria_customers'
@@ -1730,6 +1731,37 @@ export const StorageService = {
     return localStorage.getItem(LS_KEYS.REPORT_PASSWORD) || 'joel123';
   },
 
+  getPrintSettings: (): PrintSettings => {
+    try {
+      const stored = localStorage.getItem(LS_KEYS.PRINT_SETTINGS);
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch {}
+    return {
+      printLogo: false, // Default text-only to avoid thermal printer buffer overflow and garbled characters
+      autoPrintOnClose: true,
+      paperWidth: '80mm',
+    };
+  },
+
+  savePrintSettings: async (settings: Partial<PrintSettings>): Promise<PrintSettings> => {
+    const current = StorageService.getPrintSettings();
+    const updated: PrintSettings = { ...current, ...settings };
+    localStorage.setItem(LS_KEYS.PRINT_SETTINGS, JSON.stringify(updated));
+    window.dispatchEvent(new CustomEvent('print-settings-changed', { detail: updated }));
+    window.dispatchEvent(new CustomEvent('settings-changed'));
+    if (isFirebaseConfigured() && db && navigator.onLine) {
+      try {
+        await setDoc(doc(db, 'system_settings', 'global'), {
+          printSettings: updated,
+          updatedAt: Date.now()
+        }, { merge: true });
+      } catch (e) {}
+    }
+    return updated;
+  },
+
   saveReportPassword: async (password: string): Promise<void> => {
     localStorage.setItem(LS_KEYS.REPORT_PASSWORD, password);
     window.dispatchEvent(new CustomEvent('settings-changed'));
@@ -1755,6 +1787,10 @@ export const StorageService = {
           } else if (data.logoUrl === null) {
             localStorage.removeItem(LS_KEYS.LOGO);
             window.dispatchEvent(new CustomEvent('logo-updated'));
+          }
+          if (data.printSettings) {
+            localStorage.setItem(LS_KEYS.PRINT_SETTINGS, JSON.stringify(data.printSettings));
+            window.dispatchEvent(new CustomEvent('print-settings-changed', { detail: data.printSettings }));
           }
           if (data.reportPassword) {
             localStorage.setItem(LS_KEYS.REPORT_PASSWORD, data.reportPassword);

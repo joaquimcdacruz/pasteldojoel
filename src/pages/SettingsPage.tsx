@@ -20,11 +20,13 @@ import {
   ExternalLink,
   Smartphone,
   Monitor,
-  Download
+  Download,
+  Printer
 } from 'lucide-react';
 import PWAInstallButton from '@/components/pwa/PWAInstallButton';
 import { StorageService } from '@/services/storageService';
-import { UserProfile, UserRole } from '@/types';
+import { UserProfile, UserRole, PrintSettings, Order, OrderStatus, PaymentMethod, OrderType } from '@/types';
+import Receipt from '@/components/orders/Receipt';
 import { 
   db, 
   isFirebaseConfigured, 
@@ -56,6 +58,58 @@ const SettingsPage: React.FC = () => {
   // Senha Report State
   const [reportPassword, setReportPassword] = useState('');
   const [isSavingPassword, setIsSavingPassword] = useState(false);
+
+  // Impressora Térmica State
+  const [printSettings, setPrintSettings] = useState<PrintSettings>(() => StorageService.getPrintSettings());
+  const [isTestReceiptActive, setIsTestReceiptActive] = useState(false);
+
+  const handleUpdatePrintSetting = async (key: keyof PrintSettings, value: any) => {
+    const updated = await StorageService.savePrintSettings({ [key]: value });
+    setPrintSettings(updated);
+    setMessage({ type: 'success', text: 'Configuração da impressora salva com sucesso!' });
+    setTimeout(() => setMessage(null), 3000);
+  };
+
+  const handleTestPrint = () => {
+    setIsTestReceiptActive(true);
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => setIsTestReceiptActive(false), 2000);
+    }, 250);
+  };
+
+  const testOrder: Order = {
+    id: 'TEST01',
+    customerName: 'CLIENTE TESTE (JOEL)',
+    status: OrderStatus.CLOSED,
+    createdAt: Date.now(),
+    closedAt: Date.now(),
+    subtotal: 25.00,
+    discount: 0,
+    total: 25.00,
+    paymentMethod: PaymentMethod.CASH,
+    payments: [{ method: PaymentMethod.CASH, amount: 25.00 }],
+    items: [
+      {
+        id: 'test-1',
+        menuItemId: 'test-item-1',
+        name: 'PASTEL DE CARNE ESPECIAL',
+        price: 15.00,
+        quantity: 1,
+        orderType: OrderType.DINE_IN,
+        category: 'PASTEIS SALGADOS'
+      },
+      {
+        id: 'test-2',
+        menuItemId: 'test-item-2',
+        name: 'COCA-COLA LATA 350ML',
+        price: 10.00,
+        quantity: 1,
+        orderType: OrderType.DINE_IN,
+        category: 'BEBIDAS'
+      }
+    ]
+  };
 
   // Firebase Config State
   const isFirebaseActive = isFirebaseConfigured();
@@ -500,6 +554,121 @@ const SettingsPage: React.FC = () => {
         </div>
       </div>
 
+      {/* CARD: CONFIGURAÇÕES DA IMPRESSORA TÉRMICA */}
+      <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-brand-50 rounded-2xl text-brand-600 border border-brand-100">
+              <Printer size={22} />
+            </div>
+            <div>
+              <h2 className="text-base font-black text-slate-800">Impressora Térmica & Comprovantes</h2>
+              <p className="text-xs text-slate-500">Configurações para impressão rápida sem travamentos ou falhas no balcão</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleTestPrint}
+            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95"
+          >
+            <Printer size={15} />
+            Testar Impressão
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+          {/* Modo do Logotipo */}
+          <div className="bg-slate-50 border border-slate-200/70 rounded-2xl p-4 space-y-2">
+            <span className="text-[11px] font-black uppercase text-slate-500 tracking-wider block">Cabeçalho do Recibo</span>
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                <input
+                  type="radio"
+                  name="printLogo"
+                  checked={!printSettings.printLogo}
+                  onChange={() => handleUpdatePrintSetting('printLogo', false)}
+                  className="text-brand-600 focus:ring-brand-500"
+                />
+                <span>Texto Puro (Recomendado)</span>
+              </label>
+              <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                <input
+                  type="radio"
+                  name="printLogo"
+                  checked={printSettings.printLogo}
+                  onChange={() => handleUpdatePrintSetting('printLogo', true)}
+                  className="text-brand-600 focus:ring-brand-500"
+                />
+                <span>Com Imagem do Logo</span>
+              </label>
+            </div>
+            <p className="text-[10px] text-slate-400 leading-tight">
+              O modo Texto Puro imprime em menos de 1 segundo e evita caracteres estranhos ou descompasso em impressoras térmicas.
+            </p>
+          </div>
+
+          {/* Impressão Automática */}
+          <div className="bg-slate-50 border border-slate-200/70 rounded-2xl p-4 space-y-2">
+            <span className="text-[11px] font-black uppercase text-slate-500 tracking-wider block">Impressão ao Finalizar</span>
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                <input
+                  type="radio"
+                  name="autoPrint"
+                  checked={printSettings.autoPrintOnClose}
+                  onChange={() => handleUpdatePrintSetting('autoPrintOnClose', true)}
+                  className="text-brand-600 focus:ring-brand-500"
+                />
+                <span>Automática (Imprime Direto)</span>
+              </label>
+              <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                <input
+                  type="radio"
+                  name="autoPrint"
+                  checked={!printSettings.autoPrintOnClose}
+                  onChange={() => handleUpdatePrintSetting('autoPrintOnClose', false)}
+                  className="text-brand-600 focus:ring-brand-500"
+                />
+                <span>Manual (Apenas ao Clicar)</span>
+              </label>
+            </div>
+            <p className="text-[10px] text-slate-400 leading-tight">
+              Controla se a janela de impressão abre automaticamente logo após confirmar o pagamento.
+            </p>
+          </div>
+
+          {/* Largura da Bobina */}
+          <div className="bg-slate-50 border border-slate-200/70 rounded-2xl p-4 space-y-2">
+            <span className="text-[11px] font-black uppercase text-slate-500 tracking-wider block">Largura do Papel</span>
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                <input
+                  type="radio"
+                  name="paperWidth"
+                  checked={printSettings.paperWidth === '80mm'}
+                  onChange={() => handleUpdatePrintSetting('paperWidth', '80mm')}
+                  className="text-brand-600 focus:ring-brand-500"
+                />
+                <span>Bobina 80mm (Padrão)</span>
+              </label>
+              <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                <input
+                  type="radio"
+                  name="paperWidth"
+                  checked={printSettings.paperWidth === '58mm'}
+                  onChange={() => handleUpdatePrintSetting('paperWidth', '58mm')}
+                  className="text-brand-600 focus:ring-brand-500"
+                />
+                <span>Bobina 58mm (Estreita)</span>
+              </label>
+            </div>
+            <p className="text-[10px] text-slate-400 leading-tight">
+              Ajusta o espaçamento das colunas e valores para caber perfeitamente no papel da bobina.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* CARD: SENHA DO PAINEL DE RELATÓRIOS */}
       {loggedInProfile?.role === 'admin' && (
         <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-4">
@@ -798,6 +967,15 @@ const SettingsPage: React.FC = () => {
         onCancel={() => setUserToDelete(null)}
         variant="danger"
       />
+
+      {/* Recibo de teste para envio ao portal de impressão */}
+      {isTestReceiptActive && (
+        <Receipt 
+          order={testOrder} 
+          logo={currentLogo || undefined} 
+          fillings={[]} 
+        />
+      )}
     </div>
   );
 };

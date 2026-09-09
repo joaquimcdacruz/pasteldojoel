@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Loader2, Receipt as ReceiptIcon, Trash2, Pencil } from 'lucide-react';
+import { ChevronLeft, Loader2, Receipt as ReceiptIcon, Trash2, Pencil, CheckCircle, Printer, PlusCircle } from 'lucide-react';
 import { Order, OrderStatus, OrderItem, MenuItem, Addon, Filling, MenuItemFilling, PaymentMethod, CategoryItem, OrderType, Payment, DEFAULT_CATEGORIES } from '@/types';
 import { StorageService } from '@/services/storageService';
 import { subscribeToCollection } from '@/integrations/firebase/config';
@@ -25,6 +25,8 @@ const OrderDetailsPage: React.FC = () => {
   // Modals
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
@@ -344,6 +346,15 @@ const OrderDetailsPage: React.FC = () => {
     setIsItemModalOpen(false);
   };
 
+  const handleSafePrint = () => {
+    setIsPrinting(true);
+    // Tempo seguro para estabilizar o DOM antes da impressão
+    setTimeout(() => {
+      window.print();
+      setIsPrinting(false);
+    }, 250);
+  };
+
   const handleCloseOrder = async (payments: Payment[]) => {
     if (!order) return;
     const totalReceived = payments.reduce((s, p) => s + p.amount, 0);
@@ -364,13 +375,15 @@ const OrderDetailsPage: React.FC = () => {
     setOrder(updatedOrder);
     setIsPaymentModalOpen(false);
     
-    // Auto-print and quick redirect
-    // Damos um tempo menor para renderizar o estado 'FECHADO' no recibo antes de imprimir
-    setTimeout(() => { 
-        window.print(); 
-        // Navegar de volta e abrir modal de nova comanda
-        navigate('/', { state: { openNewOrder: true } });
-    }, 300);
+    // Abre a tela de confirmação de pagamento imediatamente
+    setIsSuccessModalOpen(true);
+
+    const printSettings = StorageService.getPrintSettings();
+    if (printSettings.autoPrintOnClose) {
+      setTimeout(() => {
+        handleSafePrint();
+      }, 350);
+    }
   };
 
   const handleDeleteOrder = async () => {
@@ -585,6 +598,65 @@ const OrderDetailsPage: React.FC = () => {
         onConfirm={handleRenameOrder}
         onCancel={() => !isRenaming && setIsRenameModalOpen(false)}
       />
+
+      {isSuccessModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-100 text-center space-y-5">
+            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+              <CheckCircle size={36} strokeWidth={2.5} />
+            </div>
+
+            <div className="space-y-1">
+              <h2 className="text-2xl font-black text-slate-800 tracking-tight">Venda Finalizada!</h2>
+              <p className="text-sm font-semibold text-slate-500">
+                Comanda #{order.id ? order.id.slice(0, 6).toUpperCase() : ''} • {(order.customerName || '').replace(/^X\s*/i, '')}
+              </p>
+            </div>
+
+            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-center space-y-1">
+              <span className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Total Recebido</span>
+              <div className="text-3xl font-black text-slate-900">
+                {order.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              </div>
+              {order.change && order.change > 0 ? (
+                <div className="text-xs font-bold text-emerald-700 bg-emerald-50 rounded-lg py-1 px-2.5 inline-block mt-1">
+                  Troco: {order.change.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="space-y-2.5 pt-1">
+              <button
+                type="button"
+                onClick={() => navigate('/', { state: { openNewOrder: true } })}
+                className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+              >
+                <PlusCircle size={20} />
+                Próxima Comanda (Nova)
+              </button>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <button
+                  type="button"
+                  onClick={handleSafePrint}
+                  disabled={isPrinting}
+                  className="py-3 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-1.5 transition-all"
+                >
+                  <Printer size={16} />
+                  {isPrinting ? 'Imprimindo...' : 'Reimprimir'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate('/')}
+                  className="py-3 px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-black text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-1.5 transition-all"
+                >
+                  Ver Comandas
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

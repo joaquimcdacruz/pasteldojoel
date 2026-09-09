@@ -208,4 +208,10 @@ export interface MonthlyCustomer {
   updatedAt?: number;
 }
 
+export interface PrintSettings {
+  printLogo: boolean;
+  autoPrintOnClose: boolean;
+  paperWidth: '80mm' | '58mm';
+}
+
 export const DEFAULT_CATEGORIES = ['PASTEIS SALGADOS', 'pastel grande', 'SALGADOS', 'PASTEIS DOCE', 'doces', 'BEBIDAS', 'ACRÉSCIMO'];
