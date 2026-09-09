@@ -16,6 +16,8 @@ import {
   Search, X
 } from 'lucide-react';
 import DailyReportReceipt from '@/components/reports/DailyReportReceipt';
+import ProductRankingReceipt from '@/components/reports/ProductRankingReceipt';
+import PrintRankingModal, { PrintRankingConfig } from '@/components/reports/PrintRankingModal';
 import { PaymentMethod } from '@/types';
 import { useAuth } from '@/components/AuthProvider';
 import LoginLockScreen from '@/components/LoginLockScreen';
@@ -58,6 +60,16 @@ const ReportsPage: React.FC = () => {
   const [productSearch, setProductSearch] = useState('');
   const [productStatusFilter, setProductStatusFilter] = useState<'all' | 'with_sales' | 'zero_sales'>('all');
   const [productCategoryFilter, setProductCategoryFilter] = useState<string>('all');
+
+  // Controle de Impressão (Resumo Financeiro vs Ranking de Produtos)
+  const [printTarget, setPrintTarget] = useState<'summary' | 'ranking'>('summary');
+  const [isRankingModalOpen, setIsRankingModalOpen] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [rankingPrintConfig, setRankingPrintConfig] = useState<PrintRankingConfig>({
+    filterMode: 'with_sales',
+    limit: 'all',
+    orderBy: 'qty'
+  });
 
   // Lock State: se já for admin ou tiver desbloqueado na sessão, entra diretamente
   const [isUnlocked, setIsUnlocked] = useState(() => {
@@ -224,6 +236,83 @@ const ReportsPage: React.FC = () => {
     return { total, withSales, zeroSales, totalRevenue, totalQty };
   }, [allProductSales]);
 
+  const dateLabel = useMemo(() => {
+    if (dateFilter === 'today') return `Hoje (${new Date().toLocaleDateString('pt-BR')})`;
+    if (dateFilter === 'custom') {
+      const [year, month, day] = selectedDate.split('-').map(Number);
+      return new Date(year, month - 1, day).toLocaleDateString('pt-BR');
+    }
+    if (dateFilter === 'week') return 'Últimos 7 Dias';
+    if (dateFilter === 'month') return 'Últimos 30 Dias (Mês)';
+    return 'Geral (Todo o Histórico)';
+  }, [dateFilter, selectedDate]);
+
+  const activeScreenFiltersDescription = useMemo(() => {
+    const parts: string[] = [];
+    if (productCategoryFilter !== 'all') parts.push(`Categoria: ${productCategoryFilter}`);
+    if (productStatusFilter === 'with_sales') parts.push('Vendidos');
+    if (productStatusFilter === 'zero_sales') parts.push('Sem Vendas');
+    if (productSearch.trim()) parts.push(`Busca: "${productSearch.trim()}"`);
+    return parts.length > 0 ? parts.join(' | ') : undefined;
+  }, [productCategoryFilter, productStatusFilter, productSearch]);
+
+  const rankingItemsToPrint = useMemo(() => {
+    let list = [];
+    if (rankingPrintConfig.filterMode === 'with_sales') {
+      list = allProductSales.filter(p => p.value > 0);
+    } else if (rankingPrintConfig.filterMode === 'screen_filter') {
+      list = [...filteredProductSales];
+    } else {
+      list = [...allProductSales];
+    }
+
+    list.sort((a, b) => {
+      if (rankingPrintConfig.orderBy === 'revenue') {
+        if (b.revenue !== a.revenue) return b.revenue - a.revenue;
+        return b.value - a.value;
+      } else {
+        if (b.value !== a.value) return b.value - a.value;
+        return b.revenue - a.revenue;
+      }
+    });
+
+    if (rankingPrintConfig.limit !== 'all') {
+      list = list.slice(0, rankingPrintConfig.limit);
+    }
+
+    return list;
+  }, [allProductSales, filteredProductSales, rankingPrintConfig]);
+
+  const rankingPrintStats = useMemo(() => {
+    const totalVolume = rankingItemsToPrint.reduce((s, i) => s + i.value, 0);
+    const totalRevenue = rankingItemsToPrint.reduce((s, i) => s + i.revenue, 0);
+    return { totalVolume, totalRevenue };
+  }, [rankingItemsToPrint]);
+
+  const handlePrintSummary = () => {
+    setPrintTarget('summary');
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  };
+
+  const handleOpenRankingModal = () => {
+    setIsRankingModalOpen(true);
+  };
+
+  const handleConfirmRankingPrint = (config: PrintRankingConfig) => {
+    setRankingPrintConfig(config);
+    setPrintTarget('ranking');
+    setIsPrinting(true);
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => {
+        setIsPrinting(false);
+        setIsRankingModalOpen(false);
+      }, 500);
+    }, 250);
+  };
+
   const salesByPayment = useMemo(() => {
     const map: Record<string, number> = {};
     closedOrders.forEach(o => {
@@ -311,15 +400,27 @@ const ReportsPage: React.FC = () => {
             Bloquear
           </button>
 
-          {(dateFilter === 'today' || dateFilter === 'custom') && closedOrders.length > 0 && (
+          {closedOrders.length > 0 && (
             <button 
-              onClick={() => window.print()}
-              className="flex items-center gap-3 bg-black/[0.02] border border-black/[0.05] text-slate-900 text-[10px] font-black uppercase tracking-widest px-6 py-3 rounded-xl hover:bg-black/5 hover:border-brand-500/50 transition-all shadow-sm group"
+              type="button"
+              onClick={handlePrintSummary}
+              className="flex items-center gap-2.5 bg-black/[0.02] border border-black/[0.05] text-slate-900 text-[10px] font-black uppercase tracking-widest px-5 py-3 rounded-xl hover:bg-black/5 hover:border-brand-500/50 transition-all shadow-sm group"
+              title="Imprimir Resumo Financeiro do Período"
             >
               <Printer size={16} className="text-brand-500 group-hover:scale-110 transition-transform" />
               Imprimir Resumo
             </button>
           )}
+
+          <button 
+            type="button"
+            onClick={handleOpenRankingModal}
+            className="flex items-center gap-2.5 bg-brand-50 border border-brand-200/80 text-brand-700 text-[10px] font-black uppercase tracking-widest px-5 py-3 rounded-xl hover:bg-brand-100 hover:border-brand-300 transition-all shadow-sm group active:scale-95"
+            title="Imprimir Ranking de Produtos Vendidos"
+          >
+            <Printer size={16} className="text-brand-600 group-hover:scale-110 transition-transform" />
+            Imprimir Ranking
+          </button>
 
           {isAdmin && sellers.length > 0 && (
             <select
@@ -426,9 +527,18 @@ const ReportsPage: React.FC = () => {
             icon={<ListOrdered size={16} />}
             action={
               <div className="flex items-center gap-2">
-                <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-brand-600/10 text-brand-600 border border-brand-600/20">
-                  {productStats.total} {productStats.total === 1 ? 'item no cardápio' : 'itens no cardápio'}
+                <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-brand-600/10 text-brand-600 border border-brand-600/20 hidden sm:inline-block">
+                  {productStats.total} {productStats.total === 1 ? 'item' : 'itens'}
                 </span>
+                <button
+                  type="button"
+                  onClick={handleOpenRankingModal}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white font-black text-[10px] uppercase tracking-wider rounded-xl shadow-sm transition-all active:scale-95"
+                  title="Imprimir Ranking de Produtos"
+                >
+                  <Printer size={13} />
+                  <span>Imprimir</span>
+                </button>
               </div>
             }
           >
@@ -711,27 +821,49 @@ const ReportsPage: React.FC = () => {
         )}
       </div>
 
-      <DailyReportReceipt 
-        date={
-          dateFilter === 'today' 
-            ? new Date().toLocaleDateString('pt-BR') 
-            : dateFilter === 'custom'
-              ? new Date(selectedDate + 'T12:00:00').toLocaleDateString('pt-BR')
-              : dateFilter === 'week' ? 'Últimos 7 Dias'
-              : dateFilter === 'month' ? 'Último Mês'
-              : 'Geral'
-        }
-        sellerName={sellerFilter !== 'all' ? sellers.find(s => s.id === sellerFilter)?.name : undefined}
-        totals={{
-          [PaymentMethod.CASH]: salesByPayment.find(p => p.name === PaymentMethod.CASH)?.value || 0,
-          [PaymentMethod.PIX]: salesByPayment.find(p => p.name === PaymentMethod.PIX)?.value || 0,
-          [PaymentMethod.DEBIT]: salesByPayment.find(p => p.name === PaymentMethod.DEBIT)?.value || 0,
-          [PaymentMethod.CREDIT]: salesByPayment.find(p => p.name === PaymentMethod.CREDIT)?.value || 0,
-          [PaymentMethod.FIADO]: salesByPayment.find(p => p.name === PaymentMethod.FIADO)?.value || 0,
-          total: summary.totalSales,
-          discount: summary.totalDiscount,
-          count: summary.totalOrders
-        }}
+      {/* Portal de Impressão: Resumo Diário / Financeiro */}
+      {printTarget === 'summary' && (
+        <DailyReportReceipt 
+          date={dateLabel}
+          sellerName={sellerFilter !== 'all' ? sellers.find(s => s.id === sellerFilter)?.name : undefined}
+          totals={{
+            [PaymentMethod.CASH]: salesByPayment.find(p => p.name === PaymentMethod.CASH)?.value || 0,
+            [PaymentMethod.PIX]: salesByPayment.find(p => p.name === PaymentMethod.PIX)?.value || 0,
+            [PaymentMethod.DEBIT]: salesByPayment.find(p => p.name === PaymentMethod.DEBIT)?.value || 0,
+            [PaymentMethod.CREDIT]: salesByPayment.find(p => p.name === PaymentMethod.CREDIT)?.value || 0,
+            [PaymentMethod.FIADO]: salesByPayment.find(p => p.name === PaymentMethod.FIADO)?.value || 0,
+            total: summary.totalSales,
+            discount: summary.totalDiscount,
+            count: summary.totalOrders
+          }}
+        />
+      )}
+
+      {/* Portal de Impressão: Ranking de Produtos */}
+      {printTarget === 'ranking' && (
+        <ProductRankingReceipt 
+          dateLabel={dateLabel}
+          items={rankingItemsToPrint}
+          sellerName={sellerFilter !== 'all' ? sellers.find(s => s.id === sellerFilter)?.name : undefined}
+          categoryFilter={rankingPrintConfig.filterMode === 'screen_filter' ? productCategoryFilter : undefined}
+          orderBy={rankingPrintConfig.orderBy}
+          totalVolume={rankingPrintStats.totalVolume}
+          totalRevenue={rankingPrintStats.totalRevenue}
+          totalProductsCount={allProductSales.length}
+          productsWithSalesCount={productStats.withSales}
+        />
+      )}
+
+      {/* Modal de Configuração e Confirmação de Impressão do Ranking */}
+      <PrintRankingModal
+        isOpen={isRankingModalOpen}
+        onClose={() => setIsRankingModalOpen(false)}
+        onPrint={handleConfirmRankingPrint}
+        dateLabel={dateLabel}
+        allProducts={allProductSales}
+        screenFilteredProducts={filteredProductSales}
+        activeScreenFiltersDescription={activeScreenFiltersDescription}
+        isPrinting={isPrinting}
       />
     </div>
   );

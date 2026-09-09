@@ -165,19 +165,30 @@ body {
 
   #print-receipt,
   #print-daily-report,
-  #print-customer-receipt {
+  #print-customer-receipt,
+  #print-ranking-report {
     display: block !important;
     width: 72mm !important;
     max-width: 72mm !important;
     margin: 0 !important;
     padding: 0 3mm 8mm 3mm !important;
     box-sizing: border-box !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  #print-receipt,
+  #print-daily-report,
+  #print-customer-receipt {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
     page-break-after: avoid !important;
     break-after: avoid !important;
-    background: #ffffff !important;
-    color: #000000 !important;
+  }
+
+  #print-ranking-report {
+    page-break-inside: auto !important;
+    break-inside: auto !important;
   }
 
   tr, .print-avoid-break {

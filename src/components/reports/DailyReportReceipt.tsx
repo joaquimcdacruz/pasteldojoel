@@ -3,6 +3,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { PaymentMethod } from '@/types';
+import { StorageService } from '@/services/storageService';
 
 interface DailyReportReceiptProps {
   date: string;
@@ -20,12 +21,14 @@ const DailyReportReceipt: React.FC<DailyReportReceiptProps> = ({ date, totals, s
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   const portalRoot = typeof document !== 'undefined' ? document.getElementById('print-portal') : null;
+  const printSettings = StorageService.getPrintSettings();
+  const printableWidth = printSettings.paperWidth === '58mm' ? '48mm' : '72mm';
 
   const content = (
     <div 
       id="print-daily-report" 
       className="hidden print:block bg-white text-black font-sans text-[13px] leading-tight box-border"
-      style={{ width: '72mm', maxWidth: '72mm', padding: '0 4mm 12px 4mm' }}
+      style={{ width: printableWidth, maxWidth: printableWidth, padding: '0 3mm 8mm 3mm' }}
     >
       <div className="text-center border-b border-black pb-1.5 mb-1.5">
         <h1 className="text-[17px] font-black uppercase tracking-wider">PASTELARIA DO JOEL</h1>
