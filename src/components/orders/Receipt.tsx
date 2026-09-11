@@ -65,26 +65,40 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
       )}
 
       {/* Identificação do Pedido, Cliente e Situação */}
-      <div className="border-t border-b border-black py-1.5 my-1 text-[12px] print-avoid-break space-y-0.5">
-        <div className="flex justify-between font-black text-[13px]">
-          <span>{isOpen ? 'COMANDA' : 'VENDA'}: #{cleanId}</span>
-          <span className="text-[11px] font-bold">{orderDateStr} {orderTimeStr}</span>
-        </div>
-        <div className="text-[13px] font-black uppercase break-words">
-          CLIENTE: {customerName}
-        </div>
-        {order.sellerName && (
-          <div className="text-[11px] font-bold uppercase">
-            ATENDENTE: {order.sellerName}
-          </div>
-        )}
-        <div className="flex justify-between items-center text-[11px] font-bold uppercase pt-0.5">
-          <span>ATENDIMENTO: {order.orderType === OrderType.TAKEAWAY ? 'VIAGEM' : 'LOCAL (MESA)'}</span>
-          <span className="font-black border border-black px-1.5 py-0.5 text-[10px] rounded whitespace-nowrap">
-            {isOpen ? 'EM ABERTO' : 'PAGO'}
-          </span>
-        </div>
-      </div>
+      <table className="w-full border-collapse border-t border-b border-black my-1 text-[12px]">
+        <tbody>
+          <tr>
+            <td className="text-left font-black text-[13px] py-0.5">
+              {isOpen ? 'COMANDA' : 'VENDA'}: #{cleanId}
+            </td>
+            <td className="text-right font-bold text-[11px] py-0.5 whitespace-nowrap">
+              {orderDateStr} {orderTimeStr}
+            </td>
+          </tr>
+          <tr>
+            <td colSpan={2} className="text-left font-black text-[13px] uppercase py-0.5 break-words">
+              CLIENTE: {customerName}
+            </td>
+          </tr>
+          {order.sellerName && (
+            <tr>
+              <td colSpan={2} className="text-left font-bold text-[11px] uppercase py-0.5">
+                ATENDENTE: {order.sellerName}
+              </td>
+            </tr>
+          )}
+          <tr>
+            <td className="text-left font-bold text-[11px] uppercase py-0.5">
+              ATENDIMENTO: {order.orderType === OrderType.TAKEAWAY ? 'VIAGEM' : 'LOCAL (MESA)'}
+            </td>
+            <td className="text-right py-0.5">
+              <span className="font-black border border-black px-1.5 py-0.5 text-[10px] rounded whitespace-nowrap">
+                {isOpen ? 'EM ABERTO' : 'PAGO'}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
       {/* Listagem de Itens formatada para Bobina Térmica */}
       <div className="my-1">
@@ -120,11 +134,11 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
 
           return (Object.entries(groups) as [OrderType, OrderItem[]][]).map(([type, groupItems]) => (
             <div key={type} className="mb-1.5">
-              <div className="text-center font-black uppercase text-[11px] border-b border-black py-0.5 mb-1 bg-black text-white tracking-wide">
-                {type === OrderType.TAKEAWAY ? '--- PARA VIAGEM ---' : '--- CONSUMO LOCAL (MESA) ---'}
+              <div className="text-center font-black uppercase text-[11px] border-t-2 border-b-2 border-black py-0.5 my-1 text-black tracking-wide">
+                {type === OrderType.TAKEAWAY ? '[ PARA VIAGEM ]' : '[ CONSUMO LOCAL (MESA) ]'}
               </div>
               
-              <div className="divide-y divide-black/20">
+              <div className="divide-y divide-black">
                 {groupItems.map((item) => {
                   const unitPrice = item.price + (item.extra || 0);
                   const itemTotal = unitPrice * item.quantity;
@@ -133,39 +147,43 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
                     : null;
 
                   return (
-                    <div key={item.id} className="py-1 print-avoid-break">
-                      <div className="flex justify-between items-baseline">
-                        <div className="flex-1 pr-1 font-black uppercase text-[13px] leading-tight">
-                          <span className="inline-block min-w-[26px] font-black text-[14px]">{item.quantity}x </span>
-                          <span>{item.name}</span>
-                        </div>
-                        <div className="font-black text-right whitespace-nowrap text-[13px]">
-                          {fmt(itemTotal)}
-                        </div>
-                      </div>
+                    <div key={item.id} className="py-1">
+                      <table className="w-full border-collapse">
+                        <tbody>
+                          <tr>
+                            <td className="text-left font-black uppercase text-[13px] leading-tight align-top pr-1">
+                              <span className="font-black text-[14px]">{item.quantity}x </span>
+                              {item.name}
+                            </td>
+                            <td className="text-right font-black whitespace-nowrap text-[13px] align-top">
+                              {fmt(itemTotal)}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
 
                       {item.quantity > 1 && (
-                        <div className="text-[11px] font-bold text-gray-800 pl-6">
+                        <div className="text-[11px] font-bold text-black pl-5">
                           ({item.quantity} un x {fmt(unitPrice)})
                         </div>
                       )}
 
                       {fillingName ? (
-                        <div className="text-[12px] font-bold pl-6 italic text-black mt-0.5">
-                          &gt; Recheio: {fillingName}
+                        <div className="text-[12px] font-bold pl-5 italic text-black mt-0.5">
+                          - Recheio: {fillingName}
                         </div>
                       ) : null}
 
                       {item.addons && item.addons.length > 0 ? (
                         item.addons.map(a => (
-                          <div key={a.id} className="text-[11px] font-bold pl-6 text-black">
+                          <div key={a.id} className="text-[11px] font-bold pl-5 text-black">
                             + {a.name} ({a.price > 0 ? fmt(a.price) : 'Grátis'})
                           </div>
                         ))
                       ) : null}
 
                       {item.notes ? (
-                        <div className="text-[12px] font-black pl-6 text-black mt-0.5">
+                        <div className="text-[12px] font-black pl-5 text-black mt-0.5">
                           * OBS: {item.notes}
                         </div>
                       ) : null}
@@ -179,30 +197,28 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
       </div>
 
       {/* Totais do Pedido */}
-      <div className="border-t-2 border-black pt-1 mt-1">
-        <div className="flex justify-between text-[13px] font-bold py-0.5">
-          <span>SUBTOTAL:</span>
-          <span>{fmt(order.subtotal)}</span>
-        </div>
-        
-        {Boolean(order.discount && order.discount > 0) ? (
-          <div className="flex justify-between text-[13px] font-bold py-0.5">
-            <span>DESCONTO:</span>
-            <span>-{fmt(order.discount)}</span>
-          </div>
-        ) : null}
-
-        <div className="flex justify-between items-center border-t border-b-2 border-black py-1 my-1">
-          <span className="text-[16px] font-black">TOTAL:</span>
-          <span className="text-[19px] font-black">
-            {fmt(order.total)}
-          </span>
-        </div>
-      </div>
+      <table className="w-full border-collapse border-t-2 border-b-2 border-black my-1">
+        <tbody>
+          <tr>
+            <td className="text-left font-bold text-[13px] py-0.5">SUBTOTAL:</td>
+            <td className="text-right font-bold text-[13px] py-0.5">{fmt(order.subtotal)}</td>
+          </tr>
+          {Boolean(order.discount && order.discount > 0) && (
+            <tr>
+              <td className="text-left font-bold text-[13px] py-0.5">DESCONTO:</td>
+              <td className="text-right font-bold text-[13px] py-0.5">-{fmt(order.discount)}</td>
+            </tr>
+          )}
+          <tr className="border-t border-black">
+            <td className="text-left font-black text-[15px] py-1">TOTAL:</td>
+            <td className="text-right font-black text-[18px] py-1">{fmt(order.total)}</td>
+          </tr>
+        </tbody>
+      </table>
 
       {/* Detalhes de Pagamento (SEJA FINALIZADA OU PENDENTE) */}
-      <div className="mt-1 border-b border-black pb-2 space-y-1">
-        <div className="font-black text-[12px] uppercase">
+      <div className="mt-1 border-b border-black pb-2">
+        <div className="font-black text-[12px] uppercase mb-1">
           {!isOpen || (order.payments && order.payments.length > 0)
             ? 'FORMA DE PAGAMENTO:'
             : 'SITUAÇÃO DO PAGAMENTO:'}
@@ -211,56 +227,68 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
         {!isOpen || (order.payments && order.payments.length > 0) ? (
           <>
             {order.payments && order.payments.length > 1 ? (
-              <div className="space-y-0.5">
-                {order.payments.map((p, i) => (
-                  <div key={i} className="flex justify-between text-[12px] font-bold">
-                    <span>- {p.method.toUpperCase()}:</span>
-                    <span>{fmt(p.amount)}</span>
-                  </div>
-                ))}
-                {Boolean(order.change != null && order.change > 0) && (
-                  <div className="flex justify-between font-black text-[13px] border-t border-black/40 pt-0.5">
-                    <span>TROCO:</span>
-                    <span>{fmt(order.change || 0)}</span>
-                  </div>
-                )}
-              </div>
+              <table className="w-full border-collapse">
+                <tbody>
+                  {order.payments.map((p, i) => (
+                    <tr key={i}>
+                      <td className="text-left font-bold text-[12px] py-0.5">- {p.method.toUpperCase()}:</td>
+                      <td className="text-right font-bold text-[12px] py-0.5">{fmt(p.amount)}</td>
+                    </tr>
+                  ))}
+                  {Boolean(order.change != null && order.change > 0) && (
+                    <tr className="border-t border-black">
+                      <td className="text-left font-black text-[13px] py-0.5">TROCO:</td>
+                      <td className="text-right font-black text-[13px] py-0.5">{fmt(order.change || 0)}</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             ) : (
-              <div className="space-y-0.5">
-                <div className="flex justify-between text-[12px] font-black uppercase">
-                  <span>PAGO EM:</span>
-                  <span>[{order.paymentMethod || order.payments?.[0]?.method || 'DINHEIRO'}]</span>
-                </div>
-                {Boolean(order.paymentAmountReceived != null && order.paymentAmountReceived > 0) && (
-                  <div className="flex justify-between text-[12px] font-bold">
-                    <span>VALOR RECEBIDO:</span>
-                    <span>{fmt(order.paymentAmountReceived || 0)}</span>
-                  </div>
-                )}
-                {Boolean(order.change != null && order.change > 0) && (
-                  <div className="flex justify-between font-black text-[13px] border-t border-black/40 pt-0.5">
-                    <span>TROCO:</span>
-                    <span>{fmt(order.change || 0)}</span>
-                  </div>
-                )}
-              </div>
+              <table className="w-full border-collapse">
+                <tbody>
+                  <tr>
+                    <td className="text-left font-black uppercase text-[12px] py-0.5">PAGO EM:</td>
+                    <td className="text-right font-black uppercase text-[12px] py-0.5">
+                      [{order.paymentMethod || order.payments?.[0]?.method || 'DINHEIRO'}]
+                    </td>
+                  </tr>
+                  {Boolean(order.paymentAmountReceived != null && order.paymentAmountReceived > 0) && (
+                    <tr>
+                      <td className="text-left font-bold text-[12px] py-0.5">VALOR RECEBIDO:</td>
+                      <td className="text-right font-bold text-[12px] py-0.5">
+                        {fmt(order.paymentAmountReceived || 0)}
+                      </td>
+                    </tr>
+                  )}
+                  {Boolean(order.change != null && order.change > 0) && (
+                    <tr className="border-t border-black">
+                      <td className="text-left font-black text-[13px] py-0.5">TROCO:</td>
+                      <td className="text-right font-black text-[13px] py-0.5">{fmt(order.change || 0)}</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             )}
             {order.closedAt && (
-              <div className="text-[10px] font-bold text-gray-700 text-right pt-0.5">
+              <div className="text-[10px] font-bold text-black text-right pt-1">
                 Finalizado em: {new Date(order.closedAt).toLocaleDateString('pt-BR')} às {new Date(order.closedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
               </div>
             )}
           </>
         ) : (
-          <div className="space-y-0.5">
-            <div className="flex justify-between text-[12px] font-black">
-              <span>STATUS:</span>
-              <span className="text-black uppercase underline">PENDENTE NO CAIXA</span>
-            </div>
-            <div className="text-[10px] font-bold uppercase text-center pt-0.5">
-              * CONFERÊNCIA DE CONTA / MESA *
-            </div>
-          </div>
+          <table className="w-full border-collapse">
+            <tbody>
+              <tr>
+                <td className="text-left font-black text-[12px] py-0.5">STATUS:</td>
+                <td className="text-right font-black text-[12px] py-0.5 uppercase underline">PENDENTE NO CAIXA</td>
+              </tr>
+              <tr>
+                <td colSpan={2} className="text-center font-bold text-[11px] uppercase pt-1">
+                  * CONFERÊNCIA DE CONTA / MESA *
+                </td>
+              </tr>
+            </tbody>
+          </table>
         )}
       </div>
 

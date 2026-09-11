@@ -127,14 +127,14 @@ body {
 @media print {
   @page {
     margin: 0 !important;
-    size: 80mm auto !important;
+    size: auto !important;
   }
 
   html, body {
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
-    max-width: 80mm !important;
+    max-width: 72mm !important;
     height: auto !important;
     min-height: 0 !important;
     overflow: visible !important;
@@ -142,7 +142,7 @@ body {
     color: #000000 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    font-family: Arial, Helvetica, sans-serif !important;
   }
 
   /* Oculta estritamente toda a aplicação padrão no modo de impressão */
@@ -158,8 +158,8 @@ body {
   #print-portal {
     display: block !important;
     width: 100% !important;
-    max-width: 80mm !important;
-    margin: 0 !important;
+    max-width: 72mm !important;
+    margin: 0 auto !important;
     padding: 0 !important;
   }
 
@@ -168,10 +168,10 @@ body {
   #print-customer-receipt,
   #print-ranking-report {
     display: block !important;
-    width: 76mm !important;
-    max-width: 76mm !important;
+    width: 70mm !important;
+    max-width: 70mm !important;
     margin: 0 auto !important;
-    padding: 0 2mm 14mm 3.5mm !important;
+    padding: 0 1.5mm 10mm 1.5mm !important;
     box-sizing: border-box !important;
     background: #ffffff !important;
     color: #000000 !important;
@@ -182,24 +182,18 @@ body {
   #print-daily-report.paper-58mm,
   #print-customer-receipt.paper-58mm,
   #print-ranking-report.paper-58mm {
-    width: 52mm !important;
-    max-width: 52mm !important;
-    padding: 0 1.5mm 12mm 2.5mm !important;
+    width: 48mm !important;
+    max-width: 48mm !important;
+    padding: 0 1mm 8mm 1mm !important;
   }
 
-  #print-ranking-report {
+  *, tr, td, div, p, span, table {
     page-break-inside: auto !important;
     break-inside: auto !important;
-  }
-
-  tr, .print-avoid-break {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-
-  * {
     page-break-before: auto !important;
+    break-before: auto !important;
     page-break-after: auto !important;
+    break-after: auto !important;
   }
 
   table {

@@ -246,10 +246,9 @@ const CustomerStatementReceipt: React.FC<CustomerStatementReceiptProps> = ({
       )}
 
       {/* Signature slip */}
-      <div className="mt-5 pt-3 border-t border-black text-center text-[11px]">
+      <div className="mt-5 pt-3 border-t border-black text-center text-[11px] pb-6">
         <div className="w-48 mx-auto border-b border-black mb-1" />
         <p className="font-bold uppercase text-[10px]">Assinatura do Cliente</p>
-        <p className="text-[9px] text-gray-700 mt-1">Obrigado pela preferência!</p>
       </div>
     </div>
   );
