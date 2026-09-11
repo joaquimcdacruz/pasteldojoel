@@ -178,27 +178,21 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
         })()}
       </div>
 
-      {/* Resumo de Quantidade de Itens */}
-      <div className="flex justify-between text-[11px] font-bold border-t border-b border-black/30 py-0.5 my-1">
-        <span>QUANTIDADE TOTAL:</span>
-        <span>{totalLines} {totalLines === 1 ? 'item' : 'itens'} ({totalUnits} un)</span>
-      </div>
-
       {/* Totais do Pedido */}
-      <div className="space-y-0.5 pt-0.5">
-        <div className="flex justify-between text-[13px] font-bold">
+      <div className="border-t-2 border-black pt-1 mt-1">
+        <div className="flex justify-between text-[13px] font-bold py-0.5">
           <span>SUBTOTAL:</span>
           <span>{fmt(order.subtotal)}</span>
         </div>
         
         {Boolean(order.discount && order.discount > 0) ? (
-          <div className="flex justify-between text-[13px] font-bold">
+          <div className="flex justify-between text-[13px] font-bold py-0.5">
             <span>DESCONTO:</span>
             <span>-{fmt(order.discount)}</span>
           </div>
         ) : null}
 
-        <div className="flex justify-between items-center border-t-2 border-b-2 border-black py-1 my-1">
+        <div className="flex justify-between items-center border-t border-b-2 border-black py-1 my-1">
           <span className="text-[16px] font-black">TOTAL:</span>
           <span className="text-[19px] font-black">
             {fmt(order.total)}
@@ -207,7 +201,7 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
       </div>
 
       {/* Detalhes de Pagamento (SEJA FINALIZADA OU PENDENTE) */}
-      <div className="mt-1 border-b border-black pb-1 space-y-1">
+      <div className="mt-1 border-b border-black pb-2 space-y-1">
         <div className="font-black text-[12px] uppercase">
           {!isOpen || (order.payments && order.payments.length > 0)
             ? 'FORMA DE PAGAMENTO:'
@@ -270,18 +264,8 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
         )}
       </div>
 
-      {/* Rodapé e Mensagem Final */}
-      <div className="text-center pt-2 pb-6 mt-1.5 border-t border-dashed border-black print-avoid-break">
-        <div className="text-[10px] font-bold uppercase tracking-wider leading-normal text-black mb-1">
-          *** NÃO É DOCUMENTO FISCAL ***
-        </div>
-        <div className="text-[13px] font-black uppercase leading-normal text-black mt-1">
-          OBRIGADO PELA PREFERÊNCIA!
-        </div>
-        <div className="text-[11px] font-bold uppercase leading-normal text-black mt-0.5">
-          VOLTE SEMPRE!
-        </div>
-      </div>
+      {/* Espaço de avanço do papel para corte da guilhotina/serrilha */}
+      <div className="pb-8" />
 
     </div>
   );
