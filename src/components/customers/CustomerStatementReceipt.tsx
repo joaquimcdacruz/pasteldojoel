@@ -3,6 +3,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { MonthlyCustomer, Order, CustomerPaymentRecord, CustomerFiadoOrder, OrderType } from '@/types';
+import { StorageService } from '@/services/storageService';
 
 interface CustomerStatementReceiptProps {
   customer: MonthlyCustomer;
@@ -33,12 +34,22 @@ const CustomerStatementReceipt: React.FC<CustomerStatementReceiptProps> = ({
   const totalPaid = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
 
   const portalRoot = typeof document !== 'undefined' ? document.getElementById('print-portal') : null;
+  const printSettings = StorageService.getPrintSettings();
+  const is58mm = printSettings.paperWidth === '58mm';
+  const printableWidth = is58mm ? '48mm' : '70mm';
+  const printPadding = is58mm ? '0 2.5mm 12mm 4mm' : '0 3.5mm 14mm 6mm';
+  const printMarginLeft = is58mm ? '1mm' : '2mm';
 
   const content = (
     <div 
       id="print-customer-receipt" 
       className="hidden print:block bg-white text-black text-[13px] font-sans leading-tight box-border"
-      style={{ width: '72mm', maxWidth: '72mm', padding: '0 4mm 12px 4mm' }}
+      style={{ 
+        width: printableWidth, 
+        maxWidth: printableWidth, 
+        padding: printPadding,
+        marginLeft: printMarginLeft
+      }}
     >
       {/* Header */}
       <div className="text-center mb-1">

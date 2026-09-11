@@ -154,11 +154,11 @@ body {
     display: none !important;
   }
 
-  /* Portal de impressão térmico 80mm */
+  /* Portal de impressão térmico 80mm e 58mm */
   #print-portal {
     display: block !important;
-    width: 72mm !important;
-    max-width: 72mm !important;
+    width: 70mm !important;
+    max-width: 70mm !important;
     margin: 0 !important;
     padding: 0 !important;
   }
@@ -168,10 +168,11 @@ body {
   #print-customer-receipt,
   #print-ranking-report {
     display: block !important;
-    width: 72mm !important;
-    max-width: 72mm !important;
-    margin: 0 !important;
-    padding: 0 3mm 8mm 3mm !important;
+    width: 70mm !important;
+    max-width: 70mm !important;
+    margin-left: 2mm !important;
+    margin-right: auto !important;
+    padding: 0 4mm 12mm 6mm !important;
     box-sizing: border-box !important;
     background: #ffffff !important;
     color: #000000 !important;
