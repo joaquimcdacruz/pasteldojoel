@@ -76,23 +76,11 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
             </td>
           </tr>
           <tr>
-            <td colSpan={2} className="text-left font-black text-[13px] uppercase py-0.5 break-words">
+            <td className="text-left font-black text-[13px] uppercase py-0.5 break-words">
               CLIENTE: {customerName}
             </td>
-          </tr>
-          {order.sellerName && (
-            <tr>
-              <td colSpan={2} className="text-left font-bold text-[11px] uppercase py-0.5">
-                ATENDENTE: {order.sellerName}
-              </td>
-            </tr>
-          )}
-          <tr>
-            <td className="text-left font-bold text-[11px] uppercase py-0.5">
-              ATENDIMENTO: {order.orderType === OrderType.TAKEAWAY ? 'VIAGEM' : 'LOCAL (MESA)'}
-            </td>
-            <td className="text-right py-0.5">
-              <span className="font-black border border-black px-1.5 py-0.5 text-[10px] rounded whitespace-nowrap">
+            <td className="text-right py-0.5 whitespace-nowrap">
+              <span className="font-black border border-black px-1.5 py-0.5 text-[10px] rounded">
                 {isOpen ? 'EM ABERTO' : 'PAGO'}
               </span>
             </td>
