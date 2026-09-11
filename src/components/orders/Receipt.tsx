@@ -18,9 +18,6 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
   const receiptLogo = logo || '/logo.png';
   const showLogo = printSettings.printLogo && Boolean(receiptLogo);
   const is58mm = printSettings.paperWidth === '58mm';
-  const printableWidth = is58mm ? '48mm' : '70mm';
-  const printPadding = is58mm ? '0 2.5mm 12mm 4mm' : '0 3.5mm 14mm 6mm';
-  const printMarginLeft = is58mm ? '1mm' : '2mm';
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -39,13 +36,7 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
   const content = (
     <div 
       id="print-receipt" 
-      className="hidden print:block bg-white text-black text-[13px] font-sans leading-tight box-border"
-      style={{ 
-        width: printableWidth, 
-        maxWidth: printableWidth, 
-        padding: printPadding,
-        marginLeft: printMarginLeft
-      }}
+      className={`hidden print:block bg-white text-black text-[13px] font-sans leading-tight box-border ${is58mm ? 'paper-58mm' : 'paper-80mm'}`}
     >
       {/* Cabeçalho da Pastelaria */}
       {showLogo ? (
@@ -89,7 +80,7 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
         )}
         <div className="flex justify-between items-center text-[11px] font-bold uppercase pt-0.5">
           <span>ATENDIMENTO: {order.orderType === OrderType.TAKEAWAY ? 'VIAGEM' : 'LOCAL (MESA)'}</span>
-          <span className="font-black border border-black px-1 py-0.5 text-[10px] rounded">
+          <span className="font-black border border-black px-1.5 py-0.5 text-[10px] rounded whitespace-nowrap">
             {isOpen ? 'EM ABERTO' : 'PAGO'}
           </span>
         </div>
@@ -280,12 +271,16 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
       </div>
 
       {/* Rodapé e Mensagem Final */}
-      <div className="text-center mt-2 pt-1 pb-4 print-avoid-break">
-        <p className="font-bold text-[10px] uppercase tracking-wider mb-1">
+      <div className="text-center pt-2 pb-6 mt-1.5 border-t border-dashed border-black print-avoid-break">
+        <div className="text-[10px] font-bold uppercase tracking-wider leading-normal text-black mb-1">
           *** NÃO É DOCUMENTO FISCAL ***
-        </p>
-        <p className="font-black uppercase text-[12px] leading-tight">OBRIGADO PELA PREFERÊNCIA!</p>
-        <p className="text-[11px] font-bold uppercase mt-0.5">VOLTE SEMPRE!</p>
+        </div>
+        <div className="text-[13px] font-black uppercase leading-normal text-black mt-1">
+          OBRIGADO PELA PREFERÊNCIA!
+        </div>
+        <div className="text-[11px] font-bold uppercase leading-normal text-black mt-0.5">
+          VOLTE SEMPRE!
+        </div>
       </div>
 
     </div>

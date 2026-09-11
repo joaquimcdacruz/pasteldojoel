@@ -23,20 +23,11 @@ const DailyReportReceipt: React.FC<DailyReportReceiptProps> = ({ date, totals, s
   const portalRoot = typeof document !== 'undefined' ? document.getElementById('print-portal') : null;
   const printSettings = StorageService.getPrintSettings();
   const is58mm = printSettings.paperWidth === '58mm';
-  const printableWidth = is58mm ? '48mm' : '70mm';
-  const printPadding = is58mm ? '0 2.5mm 12mm 4mm' : '0 3.5mm 14mm 6mm';
-  const printMarginLeft = is58mm ? '1mm' : '2mm';
 
   const content = (
     <div 
       id="print-daily-report" 
-      className="hidden print:block bg-white text-black font-sans text-[13px] leading-tight box-border"
-      style={{ 
-        width: printableWidth, 
-        maxWidth: printableWidth, 
-        padding: printPadding,
-        marginLeft: printMarginLeft
-      }}
+      className={`hidden print:block bg-white text-black font-sans text-[13px] leading-tight box-border ${is58mm ? 'paper-58mm' : 'paper-80mm'}`}
     >
       <div className="text-center border-b border-black pb-1.5 mb-1.5">
         <h1 className="text-[17px] font-black uppercase tracking-wider">PASTELARIA DO JOEL</h1>

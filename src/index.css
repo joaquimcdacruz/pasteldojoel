@@ -133,11 +133,11 @@ body {
   html, body {
     margin: 0 !important;
     padding: 0 !important;
-    width: 72mm !important;
-    max-width: 72mm !important;
+    width: 100% !important;
+    max-width: 80mm !important;
     height: auto !important;
     min-height: 0 !important;
-    overflow: hidden !important;
+    overflow: visible !important;
     background: #ffffff !important;
     color: #000000 !important;
     -webkit-print-color-adjust: exact !important;
@@ -157,8 +157,8 @@ body {
   /* Portal de impressão térmico 80mm e 58mm */
   #print-portal {
     display: block !important;
-    width: 70mm !important;
-    max-width: 70mm !important;
+    width: 100% !important;
+    max-width: 80mm !important;
     margin: 0 !important;
     padding: 0 !important;
   }
@@ -168,23 +168,24 @@ body {
   #print-customer-receipt,
   #print-ranking-report {
     display: block !important;
-    width: 70mm !important;
-    max-width: 70mm !important;
-    margin-left: 2mm !important;
-    margin-right: auto !important;
-    padding: 0 4mm 12mm 6mm !important;
+    width: 76mm !important;
+    max-width: 76mm !important;
+    margin: 0 auto !important;
+    padding: 0 2mm 14mm 3.5mm !important;
     box-sizing: border-box !important;
     background: #ffffff !important;
     color: #000000 !important;
+    line-height: 1.35 !important;
   }
 
-  #print-receipt,
-  #print-daily-report,
-  #print-customer-receipt {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-    page-break-after: avoid !important;
-    break-after: avoid !important;
+  /* Ajuste automático para bobinas menores de 58mm */
+  #print-receipt.paper-58mm,
+  #print-daily-report.paper-58mm,
+  #print-customer-receipt.paper-58mm,
+  #print-ranking-report.paper-58mm {
+    width: 52mm !important;
+    max-width: 52mm !important;
+    padding: 0 1.5mm 12mm 2.5mm !important;
   }
 
   #print-ranking-report {
