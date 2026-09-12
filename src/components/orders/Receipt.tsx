@@ -122,8 +122,11 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
 
           return (Object.entries(groups) as [OrderType, OrderItem[]][]).map(([type, groupItems]) => (
             <div key={type} className="mb-1.5">
-              <div className="text-center font-black uppercase text-[11px] border-t-2 border-b-2 border-black py-0.5 my-1 text-black tracking-wide">
-                {type === OrderType.TAKEAWAY ? '[ PARA VIAGEM ]' : '[ CONSUMO LOCAL (MESA) ]'}
+              <div 
+                className="text-center font-black uppercase text-[12px] py-1 my-1.5 bg-black text-white tracking-wider border border-black"
+                style={{ backgroundColor: '#000000', color: '#ffffff' }}
+              >
+                {type === OrderType.TAKEAWAY ? '--- PARA VIAGEM ---' : '--- CONSUMO LOCAL (MESA) ---'}
               </div>
               
               <div className="divide-y divide-black">
@@ -139,11 +142,13 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
                       <table className="w-full border-collapse">
                         <tbody>
                           <tr>
-                            <td className="text-left font-black uppercase text-[13px] leading-tight align-top pr-1">
-                              <span className="font-black text-[14px]">{item.quantity}x </span>
+                            <td className="w-[36px] min-w-[36px] text-left font-black text-[15px] align-top whitespace-nowrap pl-0.5">
+                              {item.quantity}X
+                            </td>
+                            <td className="text-left font-black uppercase text-[13px] leading-tight align-top px-1 break-words">
                               {item.name}
                             </td>
-                            <td className="text-right font-black whitespace-nowrap text-[13px] align-top">
+                            <td className="w-[75px] min-w-[75px] text-right font-black whitespace-nowrap text-[13px] align-top">
                               {fmt(itemTotal)}
                             </td>
                           </tr>
@@ -151,27 +156,27 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
                       </table>
 
                       {item.quantity > 1 && (
-                        <div className="text-[11px] font-bold text-black pl-5">
+                        <div className="text-[11px] font-bold text-black pl-10">
                           ({item.quantity} un x {fmt(unitPrice)})
                         </div>
                       )}
 
                       {fillingName ? (
-                        <div className="text-[12px] font-bold pl-5 italic text-black mt-0.5">
+                        <div className="text-[12px] font-bold pl-10 italic text-black mt-0.5">
                           - Recheio: {fillingName}
                         </div>
                       ) : null}
 
                       {item.addons && item.addons.length > 0 ? (
                         item.addons.map(a => (
-                          <div key={a.id} className="text-[11px] font-bold pl-5 text-black">
+                          <div key={a.id} className="text-[11px] font-bold pl-10 text-black">
                             + {a.name} ({a.price > 0 ? fmt(a.price) : 'Grátis'})
                           </div>
                         ))
                       ) : null}
 
                       {item.notes ? (
-                        <div className="text-[12px] font-black pl-5 text-black mt-0.5">
+                        <div className="text-[12px] font-black pl-10 text-black mt-0.5">
                           * OBS: {item.notes}
                         </div>
                       ) : null}
