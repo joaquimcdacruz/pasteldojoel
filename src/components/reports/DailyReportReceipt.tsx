@@ -23,10 +23,18 @@ const DailyReportReceipt: React.FC<DailyReportReceiptProps> = ({ date, totals, s
   const portalRoot = typeof document !== 'undefined' ? document.getElementById('print-portal') : null;
   const printSettings = StorageService.getPrintSettings();
   const is58mm = printSettings.paperWidth === '58mm';
+  const leftMargin = printSettings.leftMarginMm ?? (is58mm ? 3 : 5.5);
+  const printableWidth = is58mm ? 54 : (printSettings.printableWidthMm ?? 72);
+
+  const containerStyle = {
+    '--print-width': `${printableWidth}mm`,
+    '--print-margin-left': `${leftMargin}mm`,
+  } as React.CSSProperties;
 
   const content = (
     <div 
       id="print-daily-report" 
+      style={containerStyle}
       className={`hidden print:block bg-white text-black font-sans text-[13px] leading-tight box-border ${is58mm ? 'paper-58mm' : 'paper-80mm'}`}
     >
       <div className="text-center border-b border-black pb-1.5 mb-1.5">

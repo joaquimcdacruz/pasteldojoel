@@ -212,6 +212,9 @@ export interface PrintSettings {
   printLogo: boolean;
   autoPrintOnClose: boolean;
   paperWidth: '80mm' | '58mm';
+  printerModel?: 'engworks_pmf' | 'standard_80' | 'standard_58';
+  leftMarginMm?: number;
+  printableWidthMm?: number;
 }
 
 export const DEFAULT_CATEGORIES = ['PASTEIS SALGADOS', 'pastel grande', 'SALGADOS', 'PASTEIS DOCE', 'doces', 'BEBIDAS', 'ACRÉSCIMO'];

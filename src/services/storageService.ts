@@ -1735,13 +1735,24 @@ export const StorageService = {
     try {
       const stored = localStorage.getItem(LS_KEYS.PRINT_SETTINGS);
       if (stored) {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        return {
+          printLogo: parsed.printLogo ?? false,
+          autoPrintOnClose: parsed.autoPrintOnClose ?? true,
+          paperWidth: parsed.paperWidth ?? '80mm',
+          printerModel: parsed.printerModel ?? 'engworks_pmf',
+          leftMarginMm: parsed.leftMarginMm ?? 5.5,
+          printableWidthMm: parsed.printableWidthMm ?? 72,
+        };
       }
     } catch {}
     return {
       printLogo: false, // Default text-only to avoid thermal printer buffer overflow and garbled characters
       autoPrintOnClose: true,
       paperWidth: '80mm',
+      printerModel: 'engworks_pmf',
+      leftMarginMm: 5.5,
+      printableWidthMm: 72,
     };
   },
 

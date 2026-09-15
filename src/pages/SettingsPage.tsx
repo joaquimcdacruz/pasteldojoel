@@ -79,34 +79,36 @@ const SettingsPage: React.FC = () => {
   };
 
   const testOrder: Order = {
-    id: 'TEST01',
-    customerName: 'CLIENTE TESTE (JOEL)',
+    id: '1IGV6J',
+    customerName: 'RENATO',
     status: OrderStatus.CLOSED,
     createdAt: Date.now(),
     closedAt: Date.now(),
-    subtotal: 25.00,
+    subtotal: 33.00,
     discount: 0,
-    total: 25.00,
-    paymentMethod: PaymentMethod.CASH,
-    payments: [{ method: PaymentMethod.CASH, amount: 25.00 }],
+    total: 33.00,
+    paymentMethod: PaymentMethod.DEBIT,
+    paymentAmountReceived: 33.00,
+    payments: [{ method: PaymentMethod.DEBIT, amount: 33.00 }],
+    orderType: OrderType.TAKEAWAY,
     items: [
       {
         id: 'test-1',
         menuItemId: 'test-item-1',
-        name: 'PASTEL DE CARNE ESPECIAL',
-        price: 15.00,
+        name: 'BANOFFEE',
+        price: 13.00,
         quantity: 1,
-        orderType: OrderType.DINE_IN,
-        category: 'PASTEIS SALGADOS'
+        orderType: OrderType.TAKEAWAY,
+        category: 'PASTEIS DOCE'
       },
       {
         id: 'test-2',
         menuItemId: 'test-item-2',
-        name: 'COCA-COLA LATA 350ML',
+        name: 'CARNE C/ QUEIJO',
         price: 10.00,
-        quantity: 1,
-        orderType: OrderType.DINE_IN,
-        category: 'BEBIDAS'
+        quantity: 2,
+        orderType: OrderType.TAKEAWAY,
+        category: 'PASTEIS SALGADOS'
       }
     ]
   };
@@ -577,95 +579,128 @@ const SettingsPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-          {/* Modo do Logotipo */}
+          {/* Modelo e Perfil da Impressora */}
           <div className="bg-slate-50 border border-slate-200/70 rounded-2xl p-4 space-y-2">
-            <span className="text-[11px] font-black uppercase text-slate-500 tracking-wider block">Cabeçalho do Recibo</span>
+            <span className="text-[11px] font-black uppercase text-slate-500 tracking-wider block">Perfil de Calibração</span>
             <div className="space-y-1.5">
               <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
                 <input
                   type="radio"
-                  name="printLogo"
-                  checked={!printSettings.printLogo}
-                  onChange={() => handleUpdatePrintSetting('printLogo', false)}
+                  name="printerModel"
+                  checked={printSettings.printerModel === 'engworks_pmf'}
+                  onChange={() => {
+                    handleUpdatePrintSetting('printerModel', 'engworks_pmf');
+                    handleUpdatePrintSetting('paperWidth', '80mm');
+                    handleUpdatePrintSetting('leftMarginMm', 5.5);
+                    handleUpdatePrintSetting('printableWidthMm', 72);
+                  }}
                   className="text-brand-600 focus:ring-brand-500"
                 />
-                <span>Texto Puro (Recomendado)</span>
+                <span className="text-brand-700 font-black">Engworks CIS PMF (80mm)</span>
               </label>
               <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
                 <input
                   type="radio"
-                  name="printLogo"
-                  checked={printSettings.printLogo}
-                  onChange={() => handleUpdatePrintSetting('printLogo', true)}
+                  name="printerModel"
+                  checked={printSettings.printerModel === 'standard_80'}
+                  onChange={() => {
+                    handleUpdatePrintSetting('printerModel', 'standard_80');
+                    handleUpdatePrintSetting('paperWidth', '80mm');
+                    handleUpdatePrintSetting('leftMarginMm', 3.0);
+                    handleUpdatePrintSetting('printableWidthMm', 75);
+                  }}
                   className="text-brand-600 focus:ring-brand-500"
                 />
-                <span>Com Imagem do Logo</span>
-              </label>
-            </div>
-            <p className="text-[10px] text-slate-400 leading-tight">
-              O modo Texto Puro imprime em menos de 1 segundo e evita caracteres estranhos ou descompasso em impressoras térmicas.
-            </p>
-          </div>
-
-          {/* Impressão Automática */}
-          <div className="bg-slate-50 border border-slate-200/70 rounded-2xl p-4 space-y-2">
-            <span className="text-[11px] font-black uppercase text-slate-500 tracking-wider block">Impressão ao Finalizar</span>
-            <div className="space-y-1.5">
-              <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
-                <input
-                  type="radio"
-                  name="autoPrint"
-                  checked={printSettings.autoPrintOnClose}
-                  onChange={() => handleUpdatePrintSetting('autoPrintOnClose', true)}
-                  className="text-brand-600 focus:ring-brand-500"
-                />
-                <span>Automática (Imprime Direto)</span>
+                <span>Genérica 80mm</span>
               </label>
               <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
                 <input
                   type="radio"
-                  name="autoPrint"
-                  checked={!printSettings.autoPrintOnClose}
-                  onChange={() => handleUpdatePrintSetting('autoPrintOnClose', false)}
-                  className="text-brand-600 focus:ring-brand-500"
-                />
-                <span>Manual (Apenas ao Clicar)</span>
-              </label>
-            </div>
-            <p className="text-[10px] text-slate-400 leading-tight">
-              Controla se a janela de impressão abre automaticamente logo após confirmar o pagamento.
-            </p>
-          </div>
-
-          {/* Largura da Bobina */}
-          <div className="bg-slate-50 border border-slate-200/70 rounded-2xl p-4 space-y-2">
-            <span className="text-[11px] font-black uppercase text-slate-500 tracking-wider block">Largura do Papel</span>
-            <div className="space-y-1.5">
-              <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
-                <input
-                  type="radio"
-                  name="paperWidth"
-                  checked={printSettings.paperWidth === '80mm'}
-                  onChange={() => handleUpdatePrintSetting('paperWidth', '80mm')}
-                  className="text-brand-600 focus:ring-brand-500"
-                />
-                <span>Bobina 80mm (Padrão)</span>
-              </label>
-              <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
-                <input
-                  type="radio"
-                  name="paperWidth"
-                  checked={printSettings.paperWidth === '58mm'}
-                  onChange={() => handleUpdatePrintSetting('paperWidth', '58mm')}
+                  name="printerModel"
+                  checked={printSettings.printerModel === 'standard_58'}
+                  onChange={() => {
+                    handleUpdatePrintSetting('printerModel', 'standard_58');
+                    handleUpdatePrintSetting('paperWidth', '58mm');
+                    handleUpdatePrintSetting('leftMarginMm', 3.0);
+                    handleUpdatePrintSetting('printableWidthMm', 54);
+                  }}
                   className="text-brand-600 focus:ring-brand-500"
                 />
                 <span>Bobina 58mm (Estreita)</span>
               </label>
             </div>
             <p className="text-[10px] text-slate-400 leading-tight">
-              Ajusta o espaçamento das colunas e valores para caber perfeitamente no papel da bobina.
+              Calibrada para o cabeçote Fujitsu FTP-637 da Engworks CIS PMF, evitando corte de quantidades ou margens brancas.
             </p>
           </div>
+
+          {/* Margem Esquerda de Segurança */}
+          <div className="bg-slate-50 border border-slate-200/70 rounded-2xl p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-black uppercase text-slate-500 tracking-wider block">Margem Esquerda (Recuo)</span>
+              <span className="text-[11px] font-black text-brand-700">{printSettings.leftMarginMm ?? 5.5} mm</span>
+            </div>
+            <div className="grid grid-cols-4 gap-1.5 pt-0.5">
+              {[4.5, 5.5, 6.0, 7.0].map((val) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => handleUpdatePrintSetting('leftMarginMm', val)}
+                  className={`py-1.5 text-xs font-bold rounded-lg border text-center transition-all ${
+                    (printSettings.leftMarginMm ?? 5.5) === val
+                      ? 'bg-brand-500 text-white border-brand-600 shadow-sm'
+                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  {val}mm
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-slate-400 leading-tight">
+              O recuo de 5.5mm garante que os números de quantidade (ex: 1X, 2X) e o início das palavras nunca sejam cortados pela guia do papel.
+            </p>
+          </div>
+
+          {/* Impressão Automática e Logotipo */}
+          <div className="bg-slate-50 border border-slate-200/70 rounded-2xl p-4 space-y-2">
+            <span className="text-[11px] font-black uppercase text-slate-500 tracking-wider block">Opções Adicionais</span>
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={printSettings.autoPrintOnClose}
+                  onChange={(e) => handleUpdatePrintSetting('autoPrintOnClose', e.target.checked)}
+                  className="rounded text-brand-600 focus:ring-brand-500"
+                />
+                <span>Imprimir automaticamente ao finalizar</span>
+              </label>
+              <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={printSettings.printLogo}
+                  onChange={(e) => handleUpdatePrintSetting('printLogo', e.target.checked)}
+                  className="rounded text-brand-600 focus:ring-brand-500"
+                />
+                <span>Imprimir imagem do logotipo</span>
+              </label>
+            </div>
+            <p className="text-[10px] text-slate-400 leading-tight">
+              Sem logotipo em imagem o comprovante imprime instantaneamente na térmica sem atrasos no balcão.
+            </p>
+          </div>
+        </div>
+
+        {/* Guia de Configuração da Janela de Impressão para Engworks CIS PMF */}
+        <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-4 text-xs text-amber-900 space-y-1.5">
+          <div className="flex items-center gap-2 font-black text-amber-950">
+            <span>⚙️ Configuração Recomendada na Janela de Impressão do Google Chrome / Windows:</span>
+          </div>
+          <ul className="list-disc list-inside space-y-0.5 text-[11.5px] text-amber-900 font-medium">
+            <li><strong>Destino:</strong> Selecione sua impressora <span className="font-bold underline">Engworks CIS PMF</span>.</li>
+            <li><strong>Margens:</strong> Defina como <span className="font-bold underline">Nenhuma</span> (o sistema já aplica a margem exata de 5.5mm na impressora).</li>
+            <li><strong>Escala:</strong> Deixe em <span className="font-bold underline">Padrão (100%)</span>.</li>
+            <li><strong>Gráficos de segundo plano:</strong> Marque esta opção para o retângulo preto destacado de <span className="font-bold uppercase bg-black text-white px-1 py-0.2 rounded text-[10px]">--- PARA VIAGEM ---</span> sair nítido.</li>
+          </ul>
         </div>
       </div>
 

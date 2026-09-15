@@ -39,6 +39,13 @@ const ProductRankingReceipt: React.FC<ProductRankingReceiptProps> = ({
   const logo = StorageService.getLogo();
   const showLogo = printSettings.printLogo && Boolean(logo);
   const is58mm = printSettings.paperWidth === '58mm';
+  const leftMargin = printSettings.leftMarginMm ?? (is58mm ? 3 : 5.5);
+  const printableWidth = is58mm ? 54 : (printSettings.printableWidthMm ?? 72);
+
+  const containerStyle = {
+    '--print-width': `${printableWidth}mm`,
+    '--print-margin-left': `${leftMargin}mm`,
+  } as React.CSSProperties;
 
   const fmtCurrency = (val: number) =>
     val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -50,6 +57,7 @@ const ProductRankingReceipt: React.FC<ProductRankingReceiptProps> = ({
   const content = (
     <div
       id="print-ranking-report"
+      style={containerStyle}
       className={`hidden print:block bg-white text-black font-sans text-[12px] leading-tight box-border ${is58mm ? 'paper-58mm' : 'paper-80mm'}`}
     >
       {/* Cabeçalho */}

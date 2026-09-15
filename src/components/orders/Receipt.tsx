@@ -18,6 +18,13 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
   const receiptLogo = logo || '/logo.png';
   const showLogo = printSettings.printLogo && Boolean(receiptLogo);
   const is58mm = printSettings.paperWidth === '58mm';
+  const leftMargin = printSettings.leftMarginMm ?? (is58mm ? 3 : 5.5);
+  const printableWidth = is58mm ? 54 : (printSettings.printableWidthMm ?? 72);
+
+  const containerStyle = {
+    '--print-width': `${printableWidth}mm`,
+    '--print-margin-left': `${leftMargin}mm`,
+  } as React.CSSProperties;
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -36,6 +43,7 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
   const content = (
     <div 
       id="print-receipt" 
+      style={containerStyle}
       className={`hidden print:block bg-white text-black text-[13px] font-sans leading-tight box-border ${is58mm ? 'paper-58mm' : 'paper-80mm'}`}
     >
       {/* Cabeçalho da Pastelaria */}
