@@ -691,15 +691,15 @@ const SettingsPage: React.FC = () => {
         </div>
 
         {/* Guia de Configuração da Janela de Impressão para Engworks CIS PMF */}
-        <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-4 text-xs text-amber-900 space-y-1.5">
-          <div className="flex items-center gap-2 font-black text-amber-950">
-            <span>⚙️ Configuração Recomendada na Janela de Impressão do Google Chrome / Windows:</span>
+        <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-4 text-xs text-amber-900 space-y-2">
+          <div className="flex items-center gap-2 font-black text-amber-950 text-[13px]">
+            <span>⚙️ Configurações Vitais para Não Desperdiçar Papel (Google Chrome / Windows):</span>
           </div>
-          <ul className="list-disc list-inside space-y-0.5 text-[11.5px] text-amber-900 font-medium">
-            <li><strong>Destino:</strong> Selecione sua impressora <span className="font-bold underline">Engworks CIS PMF</span>.</li>
-            <li><strong>Margens:</strong> Defina como <span className="font-bold underline">Nenhuma</span> (o sistema já aplica a margem exata de 5.5mm na impressora).</li>
-            <li><strong>Escala:</strong> Deixe em <span className="font-bold underline">Padrão (100%)</span>.</li>
-            <li><strong>Gráficos de segundo plano:</strong> Marque esta opção para o retângulo preto destacado de <span className="font-bold uppercase bg-black text-white px-1 py-0.2 rounded text-[10px]">--- PARA VIAGEM ---</span> sair nítido.</li>
+          <ul className="list-disc list-inside space-y-1 text-[12px] text-amber-900 font-medium leading-relaxed">
+            <li><strong>Margens:</strong> Mude de <em>"Padrão"</em> para <span className="font-black underline bg-amber-200/80 px-1 py-0.5 rounded">NENHUMA</span>. Isso impede que o navegador adicione 10 a 20 centímetros de papel em branco ou crie páginas extras vazias.</li>
+            <li><strong>Cabeçalho e Rodapé:</strong> <span className="font-black underline bg-amber-200/80 px-1 py-0.5 rounded">DESMARQUE</span> a opção (evita imprimir data, hora e link do site no final da bobina).</li>
+            <li><strong>Destino:</strong> Selecione a sua impressora térmica <span className="font-bold underline">Engworks CIS PMF</span>.</li>
+            <li><strong>Escala:</strong> Deixe em <span className="font-bold">Padrão (100%)</span>.</li>
           </ul>
         </div>
       </div>

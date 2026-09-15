@@ -129,15 +129,16 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
           });
 
           return (Object.entries(groups) as [OrderType, OrderItem[]][]).map(([type, groupItems]) => (
-            <div key={type} className="mb-1.5">
+            <div key={type} className="mb-1">
+              {/* Faixa destacada: clara e legível mesmo sem cores de fundo no driver */}
               <div 
-                className="text-center font-black uppercase text-[12px] py-1 my-1.5 bg-black text-white tracking-wider border border-black"
+                className="text-center font-black uppercase text-[12px] py-0.5 my-1 tracking-wider border-2 border-black"
                 style={{ backgroundColor: '#000000', color: '#ffffff' }}
               >
-                {type === OrderType.TAKEAWAY ? '--- PARA VIAGEM ---' : '--- CONSUMO LOCAL (MESA) ---'}
+                {type === OrderType.TAKEAWAY ? '>>> PARA VIAGEM <<<' : '--- CONSUMO LOCAL (MESA) ---'}
               </div>
               
-              <div className="divide-y divide-black">
+              <div className="divide-y divide-dotted divide-black">
                 {groupItems.map((item) => {
                   const unitPrice = item.price + (item.extra || 0);
                   const itemTotal = unitPrice * item.quantity;
@@ -146,17 +147,17 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
                     : null;
 
                   return (
-                    <div key={item.id} className="py-1">
+                    <div key={item.id} className="py-0.5">
                       <table className="w-full border-collapse">
                         <tbody>
                           <tr>
-                            <td className="w-[36px] min-w-[36px] text-left font-black text-[15px] align-top whitespace-nowrap pl-0.5">
+                            <td className="w-[30px] min-w-[30px] text-left font-black text-[14px] align-top whitespace-nowrap">
                               {item.quantity}X
                             </td>
-                            <td className="text-left font-black uppercase text-[13px] leading-tight align-top px-1 break-words">
+                            <td className="text-left font-black uppercase text-[12px] leading-tight align-top px-1 break-words">
                               {item.name}
                             </td>
-                            <td className="w-[75px] min-w-[75px] text-right font-black whitespace-nowrap text-[13px] align-top">
+                            <td className="w-[68px] min-w-[68px] text-right font-black whitespace-nowrap text-[12px] align-top">
                               {fmt(itemTotal)}
                             </td>
                           </tr>
@@ -164,27 +165,27 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
                       </table>
 
                       {item.quantity > 1 && (
-                        <div className="text-[11px] font-bold text-black pl-10">
+                        <div className="text-[10px] font-bold text-black pl-7">
                           ({item.quantity} un x {fmt(unitPrice)})
                         </div>
                       )}
 
                       {fillingName ? (
-                        <div className="text-[12px] font-bold pl-10 italic text-black mt-0.5">
+                        <div className="text-[11px] font-bold pl-7 italic text-black">
                           - Recheio: {fillingName}
                         </div>
                       ) : null}
 
                       {item.addons && item.addons.length > 0 ? (
                         item.addons.map(a => (
-                          <div key={a.id} className="text-[11px] font-bold pl-10 text-black">
+                          <div key={a.id} className="text-[10px] font-bold pl-7 text-black">
                             + {a.name} ({a.price > 0 ? fmt(a.price) : 'Grátis'})
                           </div>
                         ))
                       ) : null}
 
                       {item.notes ? (
-                        <div className="text-[12px] font-black pl-10 text-black mt-0.5">
+                        <div className="text-[11px] font-black pl-7 text-black">
                           * OBS: {item.notes}
                         </div>
                       ) : null}
@@ -293,8 +294,8 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
         )}
       </div>
 
-      {/* Espaço de avanço do papel para corte da guilhotina/serrilha */}
-      <div className="pb-8" />
+      {/* Espaço mínimo calibrado para avanço do papel até a guilhotina sem desperdício */}
+      <div className="pb-3" />
 
     </div>
   );
