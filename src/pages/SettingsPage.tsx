@@ -591,8 +591,8 @@ const SettingsPage: React.FC = () => {
                   onChange={() => {
                     handleUpdatePrintSetting('printerModel', 'engworks_pmf');
                     handleUpdatePrintSetting('paperWidth', '80mm');
-                    handleUpdatePrintSetting('leftMarginMm', 3.5);
-                    handleUpdatePrintSetting('printableWidthMm', 70);
+                    handleUpdatePrintSetting('leftMarginMm', 1.5);
+                    handleUpdatePrintSetting('printableWidthMm', 76);
                   }}
                   className="text-brand-600 focus:ring-brand-500"
                 />
@@ -606,8 +606,8 @@ const SettingsPage: React.FC = () => {
                   onChange={() => {
                     handleUpdatePrintSetting('printerModel', 'standard_80');
                     handleUpdatePrintSetting('paperWidth', '80mm');
-                    handleUpdatePrintSetting('leftMarginMm', 3.0);
-                    handleUpdatePrintSetting('printableWidthMm', 70);
+                    handleUpdatePrintSetting('leftMarginMm', 1.5);
+                    handleUpdatePrintSetting('printableWidthMm', 76);
                   }}
                   className="text-brand-600 focus:ring-brand-500"
                 />
@@ -621,7 +621,7 @@ const SettingsPage: React.FC = () => {
                   onChange={() => {
                     handleUpdatePrintSetting('printerModel', 'standard_58');
                     handleUpdatePrintSetting('paperWidth', '58mm');
-                    handleUpdatePrintSetting('leftMarginMm', 2.0);
+                    handleUpdatePrintSetting('leftMarginMm', 1.0);
                     handleUpdatePrintSetting('printableWidthMm', 48);
                   }}
                   className="text-brand-600 focus:ring-brand-500"
@@ -630,7 +630,7 @@ const SettingsPage: React.FC = () => {
               </label>
             </div>
             <p className="text-[10px] text-slate-400 leading-tight">
-              Calibrada para o cabeçote térmico, garantindo que quantidades (1X, 2X) à esquerda e preços à direita nunca sofram corte.
+              Calibrada para ocupar 100% da largura da bobina, eliminando margens brancas e aproveitando todo o papel.
             </p>
           </div>
 
@@ -638,16 +638,16 @@ const SettingsPage: React.FC = () => {
           <div className="bg-slate-50 border border-slate-200/70 rounded-2xl p-4 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-black uppercase text-slate-500 tracking-wider block">Margem Esquerda (Recuo)</span>
-              <span className="text-[11px] font-black text-brand-700">{printSettings.leftMarginMm ?? 3.5} mm</span>
+              <span className="text-[11px] font-black text-brand-700">{printSettings.leftMarginMm ?? 1.5} mm</span>
             </div>
             <div className="grid grid-cols-4 gap-1.5 pt-0.5">
-              {[2.0, 3.5, 4.5, 5.5].map((val) => (
+              {[1.0, 1.5, 2.0, 3.0].map((val) => (
                 <button
                   key={val}
                   type="button"
                   onClick={() => handleUpdatePrintSetting('leftMarginMm', val)}
                   className={`py-1.5 text-xs font-bold rounded-lg border text-center transition-all ${
-                    (printSettings.leftMarginMm ?? 3.5) === val
+                    (printSettings.leftMarginMm ?? 1.5) === val
                       ? 'bg-brand-500 text-white border-brand-600 shadow-sm'
                       : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
                   }`}
@@ -657,7 +657,7 @@ const SettingsPage: React.FC = () => {
               ))}
             </div>
             <p className="text-[10px] text-slate-400 leading-tight">
-              Recuo seguro para a bobina física: evita que os números de quantidade ou as palavras fiquem coladas na guia do papel.
+              Recuo ultra-econômico: 1.5mm aproveita 100% da largura da bobina sem deixar faixas brancas nas bordas.
             </p>
           </div>
 
@@ -691,14 +691,17 @@ const SettingsPage: React.FC = () => {
         </div>
 
         {/* Guia de Configuração da Janela de Impressão para Engworks CIS PMF */}
-        <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-4 text-xs text-amber-900 space-y-2">
+        <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-4 text-xs text-amber-900 space-y-2.5">
           <div className="flex items-center gap-2 font-black text-amber-950 text-[13px]">
-            <span>⚙️ Configurações Vitais para Não Desperdiçar Papel (Google Chrome / Windows):</span>
+            <span>⚙️ Como Eliminar o Papel em Branco Sobrando no Final (Google Chrome):</span>
           </div>
-          <ul className="list-disc list-inside space-y-1 text-[12px] text-amber-900 font-medium leading-relaxed">
-            <li><strong>Margens:</strong> Mude de <em>"Padrão"</em> para <span className="font-black underline bg-amber-200/80 px-1 py-0.5 rounded">NENHUMA</span>. Isso impede que o navegador adicione 10 a 20 centímetros de papel em branco ou crie páginas extras vazias.</li>
-            <li><strong>Cabeçalho e Rodapé:</strong> <span className="font-black underline bg-amber-200/80 px-1 py-0.5 rounded">DESMARQUE</span> a opção (evita imprimir data, hora e link do site no final da bobina).</li>
-            <li><strong>Destino:</strong> Selecione a sua impressora térmica <span className="font-bold underline">Engworks CIS PMF</span>.</li>
+          <p className="text-[11px] text-amber-800 leading-snug">
+            Se a sua impressora está ejetando muito papel em branco depois do texto, faça o ajuste abaixo <strong>uma única vez</strong> na janela de impressão do Chrome (o navegador lembrará para as próximas):
+          </p>
+          <ul className="list-disc list-inside space-y-1.5 text-[12px] text-amber-900 font-medium leading-relaxed">
+            <li><strong>Tamanho do Papel (Mais Definições):</strong> Altere de <em>"80 x 297 mm"</em> ou <em>"A4"</em> para <span className="font-black underline bg-amber-200/80 px-1 py-0.5 rounded">Receipt</span> (ou <strong>"80 x Receipt"</strong> / <strong>"Bobina Contínua"</strong>). Se estiver como 297mm, o Windows força a impressora a puxar 30 cm de papel mesmo para um pedido pequeno!</li>
+            <li><strong>Margens:</strong> Mude de <em>"Padrão"</em> para <span className="font-black underline bg-amber-200/80 px-1 py-0.5 rounded">NENHUMA</span>. O sistema já calcula o recuo interno exato de 1.5mm, eliminando as faixas brancas laterais e verticais.</li>
+            <li><strong>Cabeçalho e Rodapé:</strong> <span className="font-black underline bg-amber-200/80 px-1 py-0.5 rounded">DESMARQUE</span> para não imprimir link do site, data do Windows ou rodapé do navegador.</li>
             <li><strong>Escala:</strong> Deixe em <span className="font-bold">Padrão (100%)</span>.</li>
           </ul>
         </div>

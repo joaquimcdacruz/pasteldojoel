@@ -1742,10 +1742,10 @@ export const StorageService = {
           autoPrintOnClose: parsed.autoPrintOnClose ?? true,
           paperWidth: parsed.paperWidth ?? '80mm',
           printerModel: parsed.printerModel ?? 'engworks_pmf',
-          leftMarginMm: parsed.leftMarginMm ?? (is58 ? 2.0 : 3.5),
+          leftMarginMm: parsed.leftMarginMm ?? (is58 ? 1.0 : 1.5),
           printableWidthMm: is58 
             ? (parsed.printableWidthMm ? Math.min(parsed.printableWidthMm, 50) : 48)
-            : (parsed.printableWidthMm ? Math.min(parsed.printableWidthMm, 70) : 70),
+            : (parsed.printableWidthMm ? Math.min(parsed.printableWidthMm, 78) : 76),
         };
       }
     } catch {}
@@ -1754,8 +1754,8 @@ export const StorageService = {
       autoPrintOnClose: true,
       paperWidth: '80mm',
       printerModel: 'engworks_pmf',
-      leftMarginMm: 3.5,
-      printableWidthMm: 70,
+      leftMarginMm: 1.5,
+      printableWidthMm: 76,
     };
   },
 

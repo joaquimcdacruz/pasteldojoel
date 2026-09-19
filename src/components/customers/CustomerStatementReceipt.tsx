@@ -36,13 +36,12 @@ const CustomerStatementReceipt: React.FC<CustomerStatementReceiptProps> = ({
   const portalRoot = typeof document !== 'undefined' ? document.getElementById('print-portal') : null;
   const printSettings = StorageService.getPrintSettings();
   const is58mm = printSettings.paperWidth === '58mm';
-  const leftMargin = printSettings.leftMarginMm ?? (is58mm ? 2 : 3.5);
-  const printableWidth = is58mm ? 48 : (printSettings.printableWidthMm ?? 70);
+  const leftMargin = printSettings.leftMarginMm ?? (is58mm ? 1.0 : 1.5);
+  const rightMargin = is58mm ? 1.0 : 1.5;
 
   const containerStyle = {
-    '--print-width': `${printableWidth}mm`,
     '--print-margin-left': `${leftMargin}mm`,
-    '--print-margin-right': `${is58mm ? 1.5 : 2}mm`,
+    '--print-margin-right': `${rightMargin}mm`,
   } as React.CSSProperties;
 
   const content = (
@@ -255,13 +254,10 @@ const CustomerStatementReceipt: React.FC<CustomerStatementReceiptProps> = ({
       )}
 
       {/* Signature slip */}
-      <div className="mt-5 pt-3 border-t border-black text-center text-[11px] pb-2">
+      <div className="mt-4 pt-2.5 border-t border-black text-center text-[11px] pb-1">
         <div className="w-48 mx-auto border-b border-black mb-1" />
         <p className="font-bold uppercase text-[10px]">Assinatura do Cliente</p>
       </div>
-
-      {/* Avanço seguro para corte na guilhotina */}
-      <div className="w-full" style={{ height: '16mm' }} />
     </div>
   );
 

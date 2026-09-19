@@ -18,13 +18,12 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
   const receiptLogo = logo || '/logo.png';
   const showLogo = printSettings.printLogo && Boolean(receiptLogo);
   const is58mm = printSettings.paperWidth === '58mm';
-  const leftMargin = printSettings.leftMarginMm ?? (is58mm ? 2 : 3.5);
-  const printableWidth = is58mm ? 48 : (printSettings.printableWidthMm ?? 70);
+  const leftMargin = printSettings.leftMarginMm ?? (is58mm ? 1.0 : 1.5);
+  const rightMargin = is58mm ? 1.0 : 1.5;
 
   const containerStyle = {
-    '--print-width': `${printableWidth}mm`,
     '--print-margin-left': `${leftMargin}mm`,
-    '--print-margin-right': `${is58mm ? 1.5 : 2}mm`,
+    '--print-margin-right': `${rightMargin}mm`,
   } as React.CSSProperties;
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -302,12 +301,10 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
         )}
       </div>
 
-      {/* Rodapé e avanço de papel calibrado para guilhotina e corte manual */}
-      <div className="pt-2 text-center text-[11px] font-bold text-black border-t border-black/50 mt-1.5">
+      {/* Rodapé compacto */}
+      <div className="pt-1.5 pb-1 text-center text-[11px] font-bold text-black border-t border-black/50 mt-1">
         Pastel do Joel agradece a preferência!
       </div>
-      <div className="w-full" style={{ height: '16mm' }} />
-
     </div>
   );
 

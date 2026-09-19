@@ -23,13 +23,12 @@ const DailyReportReceipt: React.FC<DailyReportReceiptProps> = ({ date, totals, s
   const portalRoot = typeof document !== 'undefined' ? document.getElementById('print-portal') : null;
   const printSettings = StorageService.getPrintSettings();
   const is58mm = printSettings.paperWidth === '58mm';
-  const leftMargin = printSettings.leftMarginMm ?? (is58mm ? 2 : 3.5);
-  const printableWidth = is58mm ? 48 : (printSettings.printableWidthMm ?? 70);
+  const leftMargin = printSettings.leftMarginMm ?? (is58mm ? 1.0 : 1.5);
+  const rightMargin = is58mm ? 1.0 : 1.5;
 
   const containerStyle = {
-    '--print-width': `${printableWidth}mm`,
     '--print-margin-left': `${leftMargin}mm`,
-    '--print-margin-right': `${is58mm ? 1.5 : 2}mm`,
+    '--print-margin-right': `${rightMargin}mm`,
   } as React.CSSProperties;
 
   const content = (
@@ -90,15 +89,12 @@ const DailyReportReceipt: React.FC<DailyReportReceiptProps> = ({ date, totals, s
         </div>
       </div>
 
-      <div className="text-center border-t border-black pt-2 mt-2">
+      <div className="text-center border-t border-black pt-1.5 pb-1 mt-1.5">
         <p className="text-[11px] uppercase font-black">Total de Comandas: {totals.count}</p>
-        <p className="text-[9px] mt-1 text-gray-800">
+        <p className="text-[9px] mt-0.5 text-gray-800">
           Gerado em: {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
         </p>
       </div>
-
-      {/* Avanço de segurança para guilhotina */}
-      <div className="w-full" style={{ height: '16mm' }} />
     </div>
   );
 
