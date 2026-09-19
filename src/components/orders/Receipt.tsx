@@ -18,12 +18,13 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
   const receiptLogo = logo || '/logo.png';
   const showLogo = printSettings.printLogo && Boolean(receiptLogo);
   const is58mm = printSettings.paperWidth === '58mm';
-  const leftMargin = printSettings.leftMarginMm ?? (is58mm ? 3 : 5.5);
-  const printableWidth = is58mm ? 54 : (printSettings.printableWidthMm ?? 72);
+  const leftMargin = printSettings.leftMarginMm ?? (is58mm ? 2 : 3.5);
+  const printableWidth = is58mm ? 48 : (printSettings.printableWidthMm ?? 70);
 
   const containerStyle = {
     '--print-width': `${printableWidth}mm`,
     '--print-margin-left': `${leftMargin}mm`,
+    '--print-margin-right': `${is58mm ? 1.5 : 2}mm`,
   } as React.CSSProperties;
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -133,66 +134,73 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
               {/* Faixa destacada: clara e legível mesmo sem cores de fundo no driver */}
               <div 
                 className="text-center font-black uppercase text-[12px] py-0.5 my-1 tracking-wider border-2 border-black"
-                style={{ backgroundColor: '#000000', color: '#ffffff' }}
+                style={{ 
+                  backgroundColor: '#000000', 
+                  color: '#ffffff',
+                  WebkitPrintColorAdjust: 'exact',
+                  printColorAdjust: 'exact'
+                }}
               >
                 {type === OrderType.TAKEAWAY ? '>>> PARA VIAGEM <<<' : '--- CONSUMO LOCAL (MESA) ---'}
               </div>
               
-              <div className="divide-y divide-dotted divide-black">
-                {groupItems.map((item) => {
-                  const unitPrice = item.price + (item.extra || 0);
-                  const itemTotal = unitPrice * item.quantity;
-                  const fillingName = item.fillingId 
-                    ? fillings.find(f => f.id === item.fillingId)?.name 
-                    : null;
+              <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
+                <colgroup>
+                  <col style={{ width: is58mm ? '28px' : '32px' }} />
+                  <col style={{ width: 'auto' }} />
+                  <col style={{ width: is58mm ? '58px' : '66px' }} />
+                </colgroup>
+                <tbody>
+                  {groupItems.map((item, idx) => {
+                    const unitPrice = item.price + (item.extra || 0);
+                    const itemTotal = unitPrice * item.quantity;
+                    const fillingName = item.fillingId 
+                      ? fillings.find(f => f.id === item.fillingId)?.name 
+                      : null;
 
-                  return (
-                    <div key={item.id} className="py-0.5">
-                      <table className="w-full border-collapse">
-                        <tbody>
-                          <tr>
-                            <td className="w-[30px] min-w-[30px] text-left font-black text-[14px] align-top whitespace-nowrap">
-                              {item.quantity}X
-                            </td>
-                            <td className="text-left font-black uppercase text-[12px] leading-tight align-top px-1 break-words">
-                              {item.name}
-                            </td>
-                            <td className="w-[68px] min-w-[68px] text-right font-black whitespace-nowrap text-[12px] align-top">
-                              {fmt(itemTotal)}
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-
-                      {item.quantity > 1 && (
-                        <div className="text-[10px] font-bold text-black pl-7">
-                          ({item.quantity} un x {fmt(unitPrice)})
-                        </div>
-                      )}
-
-                      {fillingName ? (
-                        <div className="text-[11px] font-bold pl-7 italic text-black">
-                          - Recheio: {fillingName}
-                        </div>
-                      ) : null}
-
-                      {item.addons && item.addons.length > 0 ? (
-                        item.addons.map(a => (
-                          <div key={a.id} className="text-[10px] font-bold pl-7 text-black">
-                            + {a.name} ({a.price > 0 ? fmt(a.price) : 'Grátis'})
-                          </div>
-                        ))
-                      ) : null}
-
-                      {item.notes ? (
-                        <div className="text-[11px] font-black pl-7 text-black">
-                          * OBS: {item.notes}
-                        </div>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
+                    return (
+                      <tr 
+                        key={item.id} 
+                        className={idx > 0 ? 'border-t border-dotted border-black' : ''}
+                        style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}
+                      >
+                        <td className="text-left font-black text-[13px] align-top py-0.5 whitespace-nowrap">
+                          {item.quantity}X
+                        </td>
+                        <td 
+                          className="text-left font-black uppercase text-[12px] leading-tight align-top py-0.5 px-1" 
+                          style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
+                        >
+                          <div>{item.name}</div>
+                          {item.quantity > 1 && (
+                            <div className="text-[10px] font-bold text-black mt-0.5 font-sans">
+                              ({item.quantity} un x {fmt(unitPrice)})
+                            </div>
+                          )}
+                          {fillingName && (
+                            <div className="text-[11px] font-bold italic text-black mt-0.5">
+                              - Recheio: {fillingName}
+                            </div>
+                          )}
+                          {item.addons && item.addons.length > 0 && item.addons.map(a => (
+                            <div key={a.id} className="text-[10px] font-bold text-black mt-0.5">
+                              + {a.name} ({a.price > 0 ? fmt(a.price) : 'Grátis'})
+                            </div>
+                          ))}
+                          {item.notes && (
+                            <div className="text-[11px] font-black text-black mt-0.5">
+                              * OBS: {item.notes}
+                            </div>
+                          )}
+                        </td>
+                        <td className="text-right font-black text-[12px] align-top py-0.5 whitespace-nowrap pl-0.5">
+                          {fmt(itemTotal)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           ));
         })()}
@@ -294,8 +302,11 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
         )}
       </div>
 
-      {/* Espaço mínimo calibrado para avanço do papel até a guilhotina sem desperdício */}
-      <div className="pb-3" />
+      {/* Rodapé e avanço de papel calibrado para guilhotina e corte manual */}
+      <div className="pt-2 text-center text-[11px] font-bold text-black border-t border-black/50 mt-1.5">
+        Pastel do Joel agradece a preferência!
+      </div>
+      <div className="w-full" style={{ height: '16mm' }} />
 
     </div>
   );

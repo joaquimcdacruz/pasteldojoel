@@ -23,12 +23,13 @@ const DailyReportReceipt: React.FC<DailyReportReceiptProps> = ({ date, totals, s
   const portalRoot = typeof document !== 'undefined' ? document.getElementById('print-portal') : null;
   const printSettings = StorageService.getPrintSettings();
   const is58mm = printSettings.paperWidth === '58mm';
-  const leftMargin = printSettings.leftMarginMm ?? (is58mm ? 3 : 5.5);
-  const printableWidth = is58mm ? 54 : (printSettings.printableWidthMm ?? 72);
+  const leftMargin = printSettings.leftMarginMm ?? (is58mm ? 2 : 3.5);
+  const printableWidth = is58mm ? 48 : (printSettings.printableWidthMm ?? 70);
 
   const containerStyle = {
     '--print-width': `${printableWidth}mm`,
     '--print-margin-left': `${leftMargin}mm`,
+    '--print-margin-right': `${is58mm ? 1.5 : 2}mm`,
   } as React.CSSProperties;
 
   const content = (
@@ -95,6 +96,9 @@ const DailyReportReceipt: React.FC<DailyReportReceiptProps> = ({ date, totals, s
           Gerado em: {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
         </p>
       </div>
+
+      {/* Avanço de segurança para guilhotina */}
+      <div className="w-full" style={{ height: '16mm' }} />
     </div>
   );
 

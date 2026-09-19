@@ -39,12 +39,13 @@ const ProductRankingReceipt: React.FC<ProductRankingReceiptProps> = ({
   const logo = StorageService.getLogo();
   const showLogo = printSettings.printLogo && Boolean(logo);
   const is58mm = printSettings.paperWidth === '58mm';
-  const leftMargin = printSettings.leftMarginMm ?? (is58mm ? 3 : 5.5);
-  const printableWidth = is58mm ? 54 : (printSettings.printableWidthMm ?? 72);
+  const leftMargin = printSettings.leftMarginMm ?? (is58mm ? 2 : 3.5);
+  const printableWidth = is58mm ? 48 : (printSettings.printableWidthMm ?? 70);
 
   const containerStyle = {
     '--print-width': `${printableWidth}mm`,
     '--print-margin-left': `${leftMargin}mm`,
+    '--print-margin-right': `${is58mm ? 1.5 : 2}mm`,
   } as React.CSSProperties;
 
   const fmtCurrency = (val: number) =>
@@ -197,7 +198,7 @@ const ProductRankingReceipt: React.FC<ProductRankingReceiptProps> = ({
         </div>
       </div>
 
-      <div className="text-center mt-2 pt-1 pb-3 print-avoid-break">
+      <div className="text-center mt-2 pt-1 pb-1 print-avoid-break">
         <p className="font-black uppercase text-[10px] tracking-wider text-black">
           PASTELARIA DO JOEL • GESTÃO & PDV
         </p>
@@ -205,6 +206,9 @@ const ProductRankingReceipt: React.FC<ProductRankingReceiptProps> = ({
           Relatório emitido para controle interno
         </p>
       </div>
+
+      {/* Avanço de segurança para guilhotina */}
+      <div className="w-full" style={{ height: '16mm' }} />
     </div>
   );
 
