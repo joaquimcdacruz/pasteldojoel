@@ -591,8 +591,8 @@ const SettingsPage: React.FC = () => {
                   onChange={() => {
                     handleUpdatePrintSetting('printerModel', 'engworks_pmf');
                     handleUpdatePrintSetting('paperWidth', '80mm');
-                    handleUpdatePrintSetting('leftMarginMm', 4.0);
-                    handleUpdatePrintSetting('printableWidthMm', 74);
+                    handleUpdatePrintSetting('leftMarginMm', 4.5);
+                    handleUpdatePrintSetting('printableWidthMm', 72);
                   }}
                   className="text-brand-600 focus:ring-brand-500"
                 />
@@ -606,8 +606,8 @@ const SettingsPage: React.FC = () => {
                   onChange={() => {
                     handleUpdatePrintSetting('printerModel', 'standard_80');
                     handleUpdatePrintSetting('paperWidth', '80mm');
-                    handleUpdatePrintSetting('leftMarginMm', 4.0);
-                    handleUpdatePrintSetting('printableWidthMm', 74);
+                    handleUpdatePrintSetting('leftMarginMm', 4.5);
+                    handleUpdatePrintSetting('printableWidthMm', 72);
                   }}
                   className="text-brand-600 focus:ring-brand-500"
                 />
@@ -621,7 +621,7 @@ const SettingsPage: React.FC = () => {
                   onChange={() => {
                     handleUpdatePrintSetting('printerModel', 'standard_58');
                     handleUpdatePrintSetting('paperWidth', '58mm');
-                    handleUpdatePrintSetting('leftMarginMm', 2.5);
+                    handleUpdatePrintSetting('leftMarginMm', 3.0);
                     handleUpdatePrintSetting('printableWidthMm', 48);
                   }}
                   className="text-brand-600 focus:ring-brand-500"
@@ -630,7 +630,7 @@ const SettingsPage: React.FC = () => {
               </label>
             </div>
             <p className="text-[10px] text-slate-400 leading-tight">
-              Calibrada para o cabeçote térmico real: garante que a quantidade (1x, 2x) e o preço nunca sofram corte físico.
+              Calibrada para 72mm (área ativa do cabeçote térmico de 80mm): quantidade e preços 100% seguros dentro do papel.
             </p>
           </div>
 
@@ -638,16 +638,16 @@ const SettingsPage: React.FC = () => {
           <div className="bg-slate-50 border border-slate-200/70 rounded-2xl p-4 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-black uppercase text-slate-500 tracking-wider block">Margem Esquerda (Recuo)</span>
-              <span className="text-[11px] font-black text-brand-700">{printSettings.leftMarginMm ?? 4.0} mm</span>
+              <span className="text-[11px] font-black text-brand-700">{printSettings.leftMarginMm ?? 4.5} mm</span>
             </div>
             <div className="grid grid-cols-4 gap-1.5 pt-0.5">
-              {[2.5, 3.5, 4.0, 5.0].map((val) => (
+              {[3.5, 4.5, 5.5, 6.5].map((val) => (
                 <button
                   key={val}
                   type="button"
                   onClick={() => handleUpdatePrintSetting('leftMarginMm', val)}
                   className={`py-1.5 text-xs font-bold rounded-lg border text-center transition-all ${
-                    (printSettings.leftMarginMm ?? 4.0) === val
+                    (printSettings.leftMarginMm ?? 4.5) === val
                       ? 'bg-brand-500 text-white border-brand-600 shadow-sm'
                       : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
                   }`}
@@ -657,7 +657,7 @@ const SettingsPage: React.FC = () => {
               ))}
             </div>
             <p className="text-[10px] text-slate-400 leading-tight">
-              Recuo seguro de 4.0mm: posiciona as quantidades perfeitamente dentro da área de impressão física da bobina.
+              Recuo seguro de 4.5mm: afasta as quantidades da borda plástica do suporte do rolo, evitando corte físico.
             </p>
           </div>
 

@@ -18,12 +18,17 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
   const receiptLogo = logo || '/logo.png';
   const showLogo = printSettings.printLogo && Boolean(receiptLogo);
   const is58mm = printSettings.paperWidth === '58mm';
-  const leftMargin = printSettings.leftMarginMm ?? (is58mm ? 2.5 : 4.0);
-  const rightMargin = is58mm ? 2.0 : 3.5;
+  // Garante margem esquerda segura mínima de 4.5mm em 80mm para afastar do corte plástico físico
+  const leftMargin = Math.max(printSettings.leftMarginMm || 0, is58mm ? 3.0 : 4.5);
+  const rightMargin = is58mm ? 2.0 : 3.0;
+  const printWidth = is58mm ? '48mm' : '72mm';
 
   const containerStyle = {
     '--print-margin-left': `${leftMargin}mm`,
     '--print-margin-right': `${rightMargin}mm`,
+    '--print-width': printWidth,
+    width: printWidth,
+    maxWidth: printWidth,
   } as React.CSSProperties;
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -130,78 +135,69 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
 
           return (Object.entries(groups) as [OrderType, OrderItem[]][]).map(([type, groupItems]) => (
             <div key={type} className="mb-1">
-              {/* Faixa destacada: clara e legível mesmo sem cores de fundo no driver */}
-              <div 
-                className="text-center font-black uppercase text-[12px] py-0.5 my-1 tracking-wider border-2 border-black"
-                style={{ 
-                  backgroundColor: '#000000', 
-                  color: '#ffffff',
-                  WebkitPrintColorAdjust: 'exact',
-                  printColorAdjust: 'exact'
-                }}
-              >
+              {/* Faixa destacada: 100% visível em qualquer impressora térmica (texto preto com bordas pretas) */}
+              <div className="text-center font-black uppercase text-[12px] py-0.5 my-1 tracking-wider border-y-2 border-black text-black">
                 {type === OrderType.TAKEAWAY ? '>>> PARA VIAGEM <<<' : '--- CONSUMO LOCAL (MESA) ---'}
               </div>
               
-              {/* Lista de Itens: Quantidade e Produto integrados, sem corte por colunas fixas */}
-              <div className="divide-y divide-dotted divide-black">
-                {groupItems.map((item) => {
-                  const unitPrice = item.price + (item.extra || 0);
-                  const itemTotal = unitPrice * item.quantity;
-                  const fillingName = item.fillingId 
-                    ? fillings.find(f => f.id === item.fillingId)?.name 
-                    : null;
+              {/* Tabela de Itens: Quantidade e Produto juntos na célula esquerda, Preço na direita */}
+              <table className="w-full border-collapse" style={{ width: '100%' }}>
+                <tbody>
+                  {groupItems.map((item) => {
+                    const unitPrice = item.price + (item.extra || 0);
+                    const itemTotal = unitPrice * item.quantity;
+                    const fillingName = item.fillingId 
+                      ? fillings.find(f => f.id === item.fillingId)?.name 
+                      : null;
 
-                  return (
-                    <div 
-                      key={item.id} 
-                      className="py-1"
-                      style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}
-                    >
-                      {/* Linha Principal: [QTD] PRODUTO ................. PREÇO */}
-                      <div className="flex items-start justify-between gap-1.5">
-                        <div className="flex items-start gap-2 flex-1 min-w-0">
-                          {/* Quantidade em super destaque - nunca encolhe e nunca corta */}
-                          <span className="font-black text-[15px] leading-tight text-black shrink-0 tracking-tight">
-                            {item.quantity}x
-                          </span>
-                          <span 
-                            className="font-black uppercase text-[13px] leading-tight text-black flex-1"
-                            style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
-                          >
-                            {item.name}
-                          </span>
-                        </div>
-                        <span className="font-black text-[13px] text-black whitespace-nowrap text-right shrink-0 pl-1 pt-0.5">
-                          {fmt(itemTotal)}
-                        </span>
-                      </div>
+                    return (
+                      <React.Fragment key={item.id}>
+                        <tr 
+                          className="border-t border-dotted border-black"
+                          style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}
+                        >
+                          {/* Coluna 1: [QTD]x [NOME DO PRODUTO] Juntos, impossível cortar ou separar */}
+                          <td className="text-left py-1 pr-1 align-top text-black">
+                            <span className="font-black text-[15px] leading-tight mr-1.5 inline-block">
+                              {item.quantity}x
+                            </span>
+                            <span 
+                              className="font-black uppercase text-[13px] leading-tight inline"
+                              style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
+                            >
+                              {item.name}
+                            </span>
+                          </td>
+                          {/* Coluna 2: Preço total alinhado à direita */}
+                          <td className="text-right font-black text-[13px] leading-tight py-1 pl-1 align-top whitespace-nowrap text-black">
+                            {fmt(itemTotal)}
+                          </td>
+                        </tr>
 
-                      {/* Informações detalhadas do item */}
-                      {item.quantity > 1 && (
-                        <div className="text-[10px] font-bold text-black pl-7 mt-0.5">
-                          ({item.quantity} un x {fmt(unitPrice)})
-                        </div>
-                      )}
-                      {fillingName && (
-                        <div className="text-[11px] font-bold italic text-black pl-7 mt-0.5">
-                          - Recheio: {fillingName}
-                        </div>
-                      )}
-                      {item.addons && item.addons.length > 0 && item.addons.map(a => (
-                        <div key={a.id} className="text-[10px] font-bold text-black pl-7 mt-0.5">
-                          + {a.name} ({a.price > 0 ? fmt(a.price) : 'Grátis'})
-                        </div>
-                      ))}
-                      {item.notes && (
-                        <div className="text-[11px] font-black text-black pl-7 mt-0.5">
-                          * OBS: {item.notes}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+                        {/* Detalhes do item: Recheio, adicionais, observações */}
+                        {(item.quantity > 1 || fillingName || (item.addons && item.addons.length > 0) || item.notes) && (
+                          <tr style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+                            <td colSpan={2} className="text-left text-[11px] font-bold text-black pb-1 pl-6">
+                              {item.quantity > 1 && (
+                                <div>({item.quantity} un x {fmt(unitPrice)})</div>
+                              )}
+                              {fillingName && (
+                                <div className="italic">- Recheio: {fillingName}</div>
+                              )}
+                              {item.addons && item.addons.length > 0 && item.addons.map(a => (
+                                <div key={a.id}>+ {a.name} ({a.price > 0 ? fmt(a.price) : 'Grátis'})</div>
+                              ))}
+                              {item.notes && (
+                                <div className="font-black">* OBS: {item.notes}</div>
+                              )}
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           ));
         })()}

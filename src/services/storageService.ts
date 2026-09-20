@@ -1737,15 +1737,18 @@ export const StorageService = {
       if (stored) {
         const parsed = JSON.parse(stored);
         const is58 = parsed.paperWidth === '58mm';
+        const rawLeft = parsed.leftMarginMm;
+        // Garante que valores antigos no localStorage (< 3.0mm) sejam corrigidos automaticamente para 4.5mm
+        const safeLeft = (rawLeft == null || rawLeft < 3.0) ? (is58 ? 3.0 : 4.5) : rawLeft;
+        const safeWidth = is58 ? 48 : 72;
+
         return {
           printLogo: parsed.printLogo ?? false,
           autoPrintOnClose: parsed.autoPrintOnClose ?? true,
           paperWidth: parsed.paperWidth ?? '80mm',
           printerModel: parsed.printerModel ?? 'engworks_pmf',
-          leftMarginMm: parsed.leftMarginMm ?? (is58 ? 2.5 : 4.0),
-          printableWidthMm: is58 
-            ? (parsed.printableWidthMm ? Math.min(parsed.printableWidthMm, 50) : 48)
-            : (parsed.printableWidthMm ? Math.min(parsed.printableWidthMm, 78) : 74),
+          leftMarginMm: safeLeft,
+          printableWidthMm: safeWidth,
         };
       }
     } catch {}
@@ -1754,8 +1757,8 @@ export const StorageService = {
       autoPrintOnClose: true,
       paperWidth: '80mm',
       printerModel: 'engworks_pmf',
-      leftMarginMm: 4.0,
-      printableWidthMm: 74,
+      leftMarginMm: 4.5,
+      printableWidthMm: 72,
     };
   },
 

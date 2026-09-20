@@ -39,12 +39,16 @@ const ProductRankingReceipt: React.FC<ProductRankingReceiptProps> = ({
   const logo = StorageService.getLogo();
   const showLogo = printSettings.printLogo && Boolean(logo);
   const is58mm = printSettings.paperWidth === '58mm';
-  const leftMargin = printSettings.leftMarginMm ?? (is58mm ? 2.5 : 4.0);
-  const rightMargin = is58mm ? 2.0 : 3.5;
+  const leftMargin = Math.max(printSettings.leftMarginMm || 0, is58mm ? 3.0 : 4.5);
+  const rightMargin = is58mm ? 2.0 : 3.0;
+  const printWidth = is58mm ? '48mm' : '72mm';
 
   const containerStyle = {
     '--print-margin-left': `${leftMargin}mm`,
     '--print-margin-right': `${rightMargin}mm`,
+    '--print-width': printWidth,
+    width: printWidth,
+    maxWidth: printWidth,
   } as React.CSSProperties;
 
   const fmtCurrency = (val: number) =>

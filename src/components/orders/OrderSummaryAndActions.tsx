@@ -8,6 +8,7 @@ interface OrderSummaryAndActionsProps {
   onDelete: () => void;
   onSave: () => void;
   onUpdateDiscount: (amount: number) => void;
+  onPrint?: () => void;
 }
 
 const OrderSummaryAndActions: React.FC<OrderSummaryAndActionsProps> = ({
@@ -15,7 +16,8 @@ const OrderSummaryAndActions: React.FC<OrderSummaryAndActionsProps> = ({
   onUpdateStatus,
   onDelete,
   onSave,
-  onUpdateDiscount
+  onUpdateDiscount,
+  onPrint
 }) => {
   const [isDiscountInputOpen, setIsDiscountInputOpen] = useState(false);
   const [discountValue, setDiscountValue] = useState(order.discount.toString());
@@ -103,7 +105,8 @@ const OrderSummaryAndActions: React.FC<OrderSummaryAndActionsProps> = ({
 
         <div className="grid grid-cols-2 gap-3">
           <button 
-            onClick={() => window.print()} 
+            type="button"
+            onClick={onPrint || (() => window.print())} 
             className="bg-slate-50 border border-black/5 py-4 rounded-2xl font-black text-[10px] text-slate-500 hover:text-slate-900 hover:bg-slate-100 uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all shadow-sm active:scale-[0.95]"
           >
             <Printer size={16}/> Imprimir

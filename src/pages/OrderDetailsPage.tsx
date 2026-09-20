@@ -510,6 +510,7 @@ const OrderDetailsPage: React.FC = () => {
           <div className="bg-white backdrop-blur-xl rounded-[2.5rem] p-3 border border-black/[0.05] shadow-sm border-t-2 border-t-brand-600">
             <OrderSummaryAndActions 
                 order={order}
+                onPrint={handleSafePrint}
                 onUpdateStatus={async (status: OrderStatus) => {
                     if (status === OrderStatus.CLOSED) {
                         setIsPaymentModalOpen(true);
