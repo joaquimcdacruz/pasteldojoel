@@ -42,8 +42,6 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
   const orderTimeStr = !isNaN(createdAtDate.getTime()) ? createdAtDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
 
   const items = order.items || [];
-  const totalUnits = items.reduce((acc, item) => acc + (item.quantity || 0), 0);
-  const totalLines = items.length;
 
   const content = (
     <div 
@@ -156,11 +154,10 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
                           className="border-t border-dotted border-black"
                           style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}
                         >
-                          {/* Coluna 1: [QTD] em badge destacado + NOME DO PRODUTO */}
+                          {/* Coluna 1: Quantidade na frente do sabor + Nome do Produto */}
                           <td className="text-left py-1 pr-1 align-top text-black">
                             <span 
-                              className="font-black text-[13px] leading-tight mr-1.5 px-1 py-0.5 border border-black inline-block whitespace-nowrap bg-white text-black"
-                              style={{ minWidth: '24px', textAlign: 'center' }}
+                              className="font-black text-[14px] leading-tight mr-1.5 inline-block whitespace-nowrap"
                             >
                               {item.quantity}x
                             </span>
@@ -177,21 +174,22 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
                           </td>
                         </tr>
 
-                        {/* Detalhes do item: SEMPRE imprime a quantidade unitária e adicionais para impossibilitar dúvidas na cozinha */}
-                        <tr style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
-                          <td colSpan={2} className="text-left text-[11px] font-bold text-black pb-1 pl-7">
-                            <div>Qtd: {item.quantity} un x {fmt(unitPrice)}</div>
-                            {fillingName && (
-                              <div className="italic">- Recheio: {fillingName}</div>
-                            )}
-                            {item.addons && item.addons.length > 0 && item.addons.map(a => (
-                              <div key={a.id}>+ {a.name} ({a.price > 0 ? fmt(a.price) : 'Grátis'})</div>
-                            ))}
-                            {item.notes && (
-                              <div className="font-black">* OBS: {item.notes}</div>
-                            )}
-                          </td>
-                        </tr>
+                        {/* Detalhes do item: apenas Recheio, adicionais e observações quando existirem (sem quantidade embaixo) */}
+                        {(fillingName || (item.addons && item.addons.length > 0) || item.notes) && (
+                          <tr style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+                            <td colSpan={2} className="text-left text-[11px] font-bold text-black pb-1 pl-6">
+                              {fillingName && (
+                                <div className="italic">- Recheio: {fillingName}</div>
+                              )}
+                              {item.addons && item.addons.length > 0 && item.addons.map(a => (
+                                <div key={a.id}>+ {a.name} ({a.price > 0 ? fmt(a.price) : 'Grátis'})</div>
+                              ))}
+                              {item.notes && (
+                                <div className="font-black">* OBS: {item.notes}</div>
+                              )}
+                            </td>
+                          </tr>
+                        )}
                       </React.Fragment>
                     );
                   })}
@@ -202,13 +200,9 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
         })()}
       </div>
 
-      {/* Totais do Pedido com contagem explícita de itens e unidades */}
+      {/* Totais do Pedido */}
       <table className="w-full border-collapse border-t-2 border-b-2 border-black my-1">
         <tbody>
-          <tr>
-            <td className="text-left font-bold text-[12px] py-0.5">ITENS / UNIDADES:</td>
-            <td className="text-right font-bold text-[12px] py-0.5">{totalLines} itens ({totalUnits} un)</td>
-          </tr>
           <tr>
             <td className="text-left font-bold text-[13px] py-0.5">SUBTOTAL:</td>
             <td className="text-right font-bold text-[13px] py-0.5">{fmt(order.subtotal)}</td>
