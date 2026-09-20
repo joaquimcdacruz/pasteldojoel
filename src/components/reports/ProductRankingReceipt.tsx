@@ -39,8 +39,8 @@ const ProductRankingReceipt: React.FC<ProductRankingReceiptProps> = ({
   const logo = StorageService.getLogo();
   const showLogo = printSettings.printLogo && Boolean(logo);
   const is58mm = printSettings.paperWidth === '58mm';
-  const leftMargin = printSettings.leftMarginMm ?? (is58mm ? 1.0 : 1.5);
-  const rightMargin = is58mm ? 1.0 : 1.5;
+  const leftMargin = printSettings.leftMarginMm ?? (is58mm ? 2.5 : 4.0);
+  const rightMargin = is58mm ? 2.0 : 3.5;
 
   const containerStyle = {
     '--print-margin-left': `${leftMargin}mm`,

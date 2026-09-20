@@ -169,7 +169,7 @@ body {
     height: auto !important;
   }
 
-  /* Comprovantes térmicos - Ocupa 100% da largura da bobina sem margens brancas vazias e sem desperdício */
+  /* Comprovantes térmicos - Margens de segurança calibradas para cabeçotes térmicos (sem corte de quantidade) */
   #print-receipt,
   #print-daily-report,
   #print-customer-receipt,
@@ -178,10 +178,10 @@ body {
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
-    padding-top: 0.5mm !important;
-    padding-bottom: 0.5mm !important;
-    padding-left: var(--print-margin-left, 1.5mm) !important;
-    padding-right: var(--print-margin-right, 1.5mm) !important;
+    padding-top: 1mm !important;
+    padding-bottom: 1mm !important;
+    padding-left: var(--print-margin-left, 4mm) !important;
+    padding-right: var(--print-margin-right, 3.5mm) !important;
     box-sizing: border-box !important;
     background: #ffffff !important;
     color: #000000 !important;
@@ -198,9 +198,9 @@ body {
   #print-ranking-report.paper-58mm {
     width: 100% !important;
     max-width: 100% !important;
-    padding-left: var(--print-margin-left, 1mm) !important;
-    padding-right: var(--print-margin-right, 1mm) !important;
-    padding-bottom: 0.5mm !important;
+    padding-left: var(--print-margin-left, 2.5mm) !important;
+    padding-right: var(--print-margin-right, 2mm) !important;
+    padding-bottom: 1mm !important;
   }
 
   table {

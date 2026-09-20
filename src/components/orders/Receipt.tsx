@@ -18,8 +18,8 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
   const receiptLogo = logo || '/logo.png';
   const showLogo = printSettings.printLogo && Boolean(receiptLogo);
   const is58mm = printSettings.paperWidth === '58mm';
-  const leftMargin = printSettings.leftMarginMm ?? (is58mm ? 1.0 : 1.5);
-  const rightMargin = is58mm ? 1.0 : 1.5;
+  const leftMargin = printSettings.leftMarginMm ?? (is58mm ? 2.5 : 4.0);
+  const rightMargin = is58mm ? 2.0 : 3.5;
 
   const containerStyle = {
     '--print-margin-left': `${leftMargin}mm`,
@@ -143,63 +143,65 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
                 {type === OrderType.TAKEAWAY ? '>>> PARA VIAGEM <<<' : '--- CONSUMO LOCAL (MESA) ---'}
               </div>
               
-              <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
-                <colgroup>
-                  <col style={{ width: is58mm ? '28px' : '32px' }} />
-                  <col style={{ width: 'auto' }} />
-                  <col style={{ width: is58mm ? '58px' : '66px' }} />
-                </colgroup>
-                <tbody>
-                  {groupItems.map((item, idx) => {
-                    const unitPrice = item.price + (item.extra || 0);
-                    const itemTotal = unitPrice * item.quantity;
-                    const fillingName = item.fillingId 
-                      ? fillings.find(f => f.id === item.fillingId)?.name 
-                      : null;
+              {/* Lista de Itens: Quantidade e Produto integrados, sem corte por colunas fixas */}
+              <div className="divide-y divide-dotted divide-black">
+                {groupItems.map((item) => {
+                  const unitPrice = item.price + (item.extra || 0);
+                  const itemTotal = unitPrice * item.quantity;
+                  const fillingName = item.fillingId 
+                    ? fillings.find(f => f.id === item.fillingId)?.name 
+                    : null;
 
-                    return (
-                      <tr 
-                        key={item.id} 
-                        className={idx > 0 ? 'border-t border-dotted border-black' : ''}
-                        style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}
-                      >
-                        <td className="text-left font-black text-[13px] align-top py-0.5 whitespace-nowrap">
-                          {item.quantity}X
-                        </td>
-                        <td 
-                          className="text-left font-black uppercase text-[12px] leading-tight align-top py-0.5 px-1" 
-                          style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
-                        >
-                          <div>{item.name}</div>
-                          {item.quantity > 1 && (
-                            <div className="text-[10px] font-bold text-black mt-0.5 font-sans">
-                              ({item.quantity} un x {fmt(unitPrice)})
-                            </div>
-                          )}
-                          {fillingName && (
-                            <div className="text-[11px] font-bold italic text-black mt-0.5">
-                              - Recheio: {fillingName}
-                            </div>
-                          )}
-                          {item.addons && item.addons.length > 0 && item.addons.map(a => (
-                            <div key={a.id} className="text-[10px] font-bold text-black mt-0.5">
-                              + {a.name} ({a.price > 0 ? fmt(a.price) : 'Grátis'})
-                            </div>
-                          ))}
-                          {item.notes && (
-                            <div className="text-[11px] font-black text-black mt-0.5">
-                              * OBS: {item.notes}
-                            </div>
-                          )}
-                        </td>
-                        <td className="text-right font-black text-[12px] align-top py-0.5 whitespace-nowrap pl-0.5">
+                  return (
+                    <div 
+                      key={item.id} 
+                      className="py-1"
+                      style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}
+                    >
+                      {/* Linha Principal: [QTD] PRODUTO ................. PREÇO */}
+                      <div className="flex items-start justify-between gap-1.5">
+                        <div className="flex items-start gap-2 flex-1 min-w-0">
+                          {/* Quantidade em super destaque - nunca encolhe e nunca corta */}
+                          <span className="font-black text-[15px] leading-tight text-black shrink-0 tracking-tight">
+                            {item.quantity}x
+                          </span>
+                          <span 
+                            className="font-black uppercase text-[13px] leading-tight text-black flex-1"
+                            style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
+                          >
+                            {item.name}
+                          </span>
+                        </div>
+                        <span className="font-black text-[13px] text-black whitespace-nowrap text-right shrink-0 pl-1 pt-0.5">
                           {fmt(itemTotal)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                        </span>
+                      </div>
+
+                      {/* Informações detalhadas do item */}
+                      {item.quantity > 1 && (
+                        <div className="text-[10px] font-bold text-black pl-7 mt-0.5">
+                          ({item.quantity} un x {fmt(unitPrice)})
+                        </div>
+                      )}
+                      {fillingName && (
+                        <div className="text-[11px] font-bold italic text-black pl-7 mt-0.5">
+                          - Recheio: {fillingName}
+                        </div>
+                      )}
+                      {item.addons && item.addons.length > 0 && item.addons.map(a => (
+                        <div key={a.id} className="text-[10px] font-bold text-black pl-7 mt-0.5">
+                          + {a.name} ({a.price > 0 ? fmt(a.price) : 'Grátis'})
+                        </div>
+                      ))}
+                      {item.notes && (
+                        <div className="text-[11px] font-black text-black pl-7 mt-0.5">
+                          * OBS: {item.notes}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           ));
         })()}
