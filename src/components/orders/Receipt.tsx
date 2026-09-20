@@ -18,10 +18,10 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
   const receiptLogo = logo || '/logo.png';
   const showLogo = printSettings.printLogo && Boolean(receiptLogo);
   const is58mm = printSettings.paperWidth === '58mm';
-  // Garante margem esquerda segura mínima de 4.5mm em 80mm para afastar do corte plástico físico
-  const leftMargin = Math.max(printSettings.leftMarginMm || 0, is58mm ? 3.0 : 4.5);
-  const rightMargin = is58mm ? 2.0 : 3.0;
-  const printWidth = is58mm ? '48mm' : '72mm';
+  // Recuo seguro contra a zona cega física do cabeçote térmico (mínimo 6.5mm em 80mm e 4.0mm em 58mm)
+  const leftMargin = Math.max(printSettings.leftMarginMm || 0, is58mm ? 4.0 : 6.5);
+  const rightMargin = is58mm ? 2.0 : 4.0;
+  const printWidth = is58mm ? '48mm' : '68mm';
 
   const containerStyle = {
     '--print-margin-left': `${leftMargin}mm`,
@@ -140,7 +140,7 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
                 {type === OrderType.TAKEAWAY ? '>>> PARA VIAGEM <<<' : '--- CONSUMO LOCAL (MESA) ---'}
               </div>
               
-              {/* Tabela de Itens: Quantidade e Produto juntos na célula esquerda, Preço na direita */}
+              {/* Tabela de Itens: Quantidade destacada em badge + Nome + Preço */}
               <table className="w-full border-collapse" style={{ width: '100%' }}>
                 <tbody>
                   {groupItems.map((item) => {
@@ -156,9 +156,12 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
                           className="border-t border-dotted border-black"
                           style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}
                         >
-                          {/* Coluna 1: [QTD]x [NOME DO PRODUTO] Juntos, impossível cortar ou separar */}
+                          {/* Coluna 1: [QTD] em badge destacado + NOME DO PRODUTO */}
                           <td className="text-left py-1 pr-1 align-top text-black">
-                            <span className="font-black text-[15px] leading-tight mr-1.5 inline-block">
+                            <span 
+                              className="font-black text-[13px] leading-tight mr-1.5 px-1 py-0.5 border border-black inline-block whitespace-nowrap bg-white text-black"
+                              style={{ minWidth: '24px', textAlign: 'center' }}
+                            >
                               {item.quantity}x
                             </span>
                             <span 
@@ -174,25 +177,21 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
                           </td>
                         </tr>
 
-                        {/* Detalhes do item: Recheio, adicionais, observações */}
-                        {(item.quantity > 1 || fillingName || (item.addons && item.addons.length > 0) || item.notes) && (
-                          <tr style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
-                            <td colSpan={2} className="text-left text-[11px] font-bold text-black pb-1 pl-6">
-                              {item.quantity > 1 && (
-                                <div>({item.quantity} un x {fmt(unitPrice)})</div>
-                              )}
-                              {fillingName && (
-                                <div className="italic">- Recheio: {fillingName}</div>
-                              )}
-                              {item.addons && item.addons.length > 0 && item.addons.map(a => (
-                                <div key={a.id}>+ {a.name} ({a.price > 0 ? fmt(a.price) : 'Grátis'})</div>
-                              ))}
-                              {item.notes && (
-                                <div className="font-black">* OBS: {item.notes}</div>
-                              )}
-                            </td>
-                          </tr>
-                        )}
+                        {/* Detalhes do item: SEMPRE imprime a quantidade unitária e adicionais para impossibilitar dúvidas na cozinha */}
+                        <tr style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+                          <td colSpan={2} className="text-left text-[11px] font-bold text-black pb-1 pl-7">
+                            <div>Qtd: {item.quantity} un x {fmt(unitPrice)}</div>
+                            {fillingName && (
+                              <div className="italic">- Recheio: {fillingName}</div>
+                            )}
+                            {item.addons && item.addons.length > 0 && item.addons.map(a => (
+                              <div key={a.id}>+ {a.name} ({a.price > 0 ? fmt(a.price) : 'Grátis'})</div>
+                            ))}
+                            {item.notes && (
+                              <div className="font-black">* OBS: {item.notes}</div>
+                            )}
+                          </td>
+                        </tr>
                       </React.Fragment>
                     );
                   })}
@@ -203,9 +202,13 @@ const Receipt: React.FC<ReceiptProps> = ({ order, logo, fillings }) => {
         })()}
       </div>
 
-      {/* Totais do Pedido */}
+      {/* Totais do Pedido com contagem explícita de itens e unidades */}
       <table className="w-full border-collapse border-t-2 border-b-2 border-black my-1">
         <tbody>
+          <tr>
+            <td className="text-left font-bold text-[12px] py-0.5">ITENS / UNIDADES:</td>
+            <td className="text-right font-bold text-[12px] py-0.5">{totalLines} itens ({totalUnits} un)</td>
+          </tr>
           <tr>
             <td className="text-left font-bold text-[13px] py-0.5">SUBTOTAL:</td>
             <td className="text-right font-bold text-[13px] py-0.5">{fmt(order.subtotal)}</td>

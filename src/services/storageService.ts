@@ -1738,9 +1738,9 @@ export const StorageService = {
         const parsed = JSON.parse(stored);
         const is58 = parsed.paperWidth === '58mm';
         const rawLeft = parsed.leftMarginMm;
-        // Garante que valores antigos no localStorage (< 3.0mm) sejam corrigidos automaticamente para 4.5mm
-        const safeLeft = (rawLeft == null || rawLeft < 3.0) ? (is58 ? 3.0 : 4.5) : rawLeft;
-        const safeWidth = is58 ? 48 : 72;
+        // Garante recuo seguro contra a zona cega física de cabeçotes térmicos (6.5mm em 80mm e 4.0mm em 58mm)
+        const safeLeft = (rawLeft == null || rawLeft < 4.0) ? (is58 ? 4.0 : 6.5) : rawLeft;
+        const safeWidth = is58 ? 48 : 68;
 
         return {
           printLogo: parsed.printLogo ?? false,
@@ -1757,8 +1757,8 @@ export const StorageService = {
       autoPrintOnClose: true,
       paperWidth: '80mm',
       printerModel: 'engworks_pmf',
-      leftMarginMm: 4.5,
-      printableWidthMm: 72,
+      leftMarginMm: 6.5,
+      printableWidthMm: 68,
     };
   },
 

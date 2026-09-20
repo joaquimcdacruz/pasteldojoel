@@ -36,9 +36,9 @@ const CustomerStatementReceipt: React.FC<CustomerStatementReceiptProps> = ({
   const portalRoot = typeof document !== 'undefined' ? document.getElementById('print-portal') : null;
   const printSettings = StorageService.getPrintSettings();
   const is58mm = printSettings.paperWidth === '58mm';
-  const leftMargin = Math.max(printSettings.leftMarginMm || 0, is58mm ? 3.0 : 4.5);
-  const rightMargin = is58mm ? 2.0 : 3.0;
-  const printWidth = is58mm ? '48mm' : '72mm';
+  const leftMargin = Math.max(printSettings.leftMarginMm || 0, is58mm ? 4.0 : 6.5);
+  const rightMargin = is58mm ? 2.0 : 4.0;
+  const printWidth = is58mm ? '48mm' : '68mm';
 
   const containerStyle = {
     '--print-margin-left': `${leftMargin}mm`,
